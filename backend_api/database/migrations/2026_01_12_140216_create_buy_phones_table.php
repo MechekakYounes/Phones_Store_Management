@@ -41,7 +41,6 @@ return new class extends Migration
             $table->index('received_date');
             $table->index('sold_date');
             $table->index('created_at');
-            $table->timestamps();
         });
     }
 

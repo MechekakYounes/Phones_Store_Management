@@ -26,7 +26,6 @@ return new class extends Migration
             $table->index('purchase_id');
             $table->index('product_id');
             $table->index('state');
-            $table->timestamps();
         });
     }
 

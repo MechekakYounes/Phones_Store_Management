@@ -25,7 +25,6 @@ return new class extends Migration
             $table->index('name');
             $table->index('phone');
             $table->index('created_at');
-            $table->timestamps();
         });
     }
 
