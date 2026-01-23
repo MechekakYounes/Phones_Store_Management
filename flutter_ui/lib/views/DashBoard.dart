@@ -14,6 +14,10 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   /// Selected index for navigation (Mobile bottom nav / Desktop rail)
   int selectedIndex = 0;
+  final List<Map<String, dynamic>> localHistory = [];
+  void addHistory(Map<String, dynamic> item) {
+    localHistory.insert(0, item); // newest first
+  }
 
   /// Navigate based on selected index
   void _navigate(int index) {
@@ -23,6 +27,9 @@ class _DashboardPageState extends State<DashboardPage> {
       Navigator.pushNamed(context, '/inventory');
     }
     if (index == 2) {
+      Navigator.pushNamed(context, '/history');
+    }
+    if (index == 3) {
       // logout for later
     }
   }
@@ -33,20 +40,18 @@ class _DashboardPageState extends State<DashboardPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Overview'),
-
-        /// AppBar actions:
-        /// - notifications
-        /// - exchange page
+        title: Row(
+          children: const [
+            Icon(Icons.phone_android),
+            SizedBox(width: 10),
+            Text("Phone Store"),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_none),
-            onPressed: () {
-              // later: notification page / panel
-            },
+            onPressed: () {},
           ),
-
-          /// Exchange button added
           IconButton(
             icon: const Icon(Icons.swap_horiz),
             tooltip: "Phone Exchange",
@@ -65,11 +70,21 @@ class _DashboardPageState extends State<DashboardPage> {
               onTap: _navigate,
               items: const [
                 BottomNavigationBarItem(
-                    icon: Icon(Icons.dashboard), label: 'Overview'),
+                  icon: Icon(Icons.dashboard),
+                  label: 'Overview',
+                ),
                 BottomNavigationBarItem(
-                    icon: Icon(Icons.inventory), label: 'Inventory'),
+                  icon: Icon(Icons.inventory),
+                  label: 'Inventory',
+                ),
                 BottomNavigationBarItem(
-                    icon: Icon(Icons.logout), label: 'Logout'),
+                  icon: Icon(Icons.history),
+                  label: 'History',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.logout),
+                  label: 'Logout',
+                ),
               ],
             ),
 
@@ -82,11 +97,21 @@ class _DashboardPageState extends State<DashboardPage> {
               onDestinationSelected: _navigate,
               destinations: const [
                 NavigationRailDestination(
-                    icon: Icon(Icons.dashboard), label: Text('Overview')),
+                  icon: Icon(Icons.dashboard),
+                  label: Text('Overview'),
+                ),
                 NavigationRailDestination(
-                    icon: Icon(Icons.inventory), label: Text('Inventory')),
+                  icon: Icon(Icons.inventory),
+                  label: Text('Inventory'),
+                ),
                 NavigationRailDestination(
-                    icon: Icon(Icons.logout), label: Text('Logout')),
+                  icon: Icon(Icons.history),
+                  label: Text('History'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.logout),
+                  label: Text('Logout'),
+                ),
               ],
             ),
 
@@ -122,8 +147,10 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             Text('Welcome back,', style: TextStyle(color: Colors.grey)),
             SizedBox(height: 4),
-            Text('Hello, Admin',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            Text(
+              'Hello, Admin',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         CircleAvatar(child: Icon(Icons.person)),
@@ -167,14 +194,17 @@ class _DashboardPageState extends State<DashboardPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: const [
-          Text('Sales Overview',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+          Text(
+            'Sales Overview',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          ),
           SizedBox(height: 12),
-          Text('\$8,420',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+          Text(
+            '\$8,420',
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+          ),
           SizedBox(height: 6),
-          Text('↑ 12.5% from last week',
-              style: TextStyle(color: Colors.green)),
+          Text('↑ 12.5% from last week', style: TextStyle(color: Colors.green)),
           SizedBox(height: 16),
           SizedBox(
             height: 120,
@@ -192,16 +222,42 @@ class _DashboardPageState extends State<DashboardPage> {
 
   /// Recent Transactions list
   Widget _recentTransactions() {
+    final recent = localHistory.take(4).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        Text('Recent Transactions',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-        SizedBox(height: 12),
-        _TransactionTile('iPhone 15 Pro Max', '\$1,199.00', '2 minutes ago'),
-        _TransactionTile('AirPods Pro (2nd Gen)', '\$249.00', '45 minutes ago'),
-        _TransactionTile('Apple Watch Ultra 2', '\$799.00', '1 hour ago'),
-        _TransactionTile('USB-C Power Adapter', '\$19.00', '3 hours ago'),
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Recent Transactions',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pushNamed(context, "/history");
+              },
+              child: const Text("See all"),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (recent.isEmpty)
+          const Text(
+            "No transactions yet.",
+            style: TextStyle(color: Colors.grey),
+          )
+        else
+          ...recent.map((h) {
+            return _TransactionTile(
+              (h["title"] ?? "Unknown").toString(),
+              h["amount"] != null ? "\$${h["amount"]}" : "",
+              (h["created_at"] is DateTime)
+                  ? (h["created_at"] as DateTime).toIso8601String()
+                  : "",
+            );
+          }).toList(),
       ],
     );
   }
@@ -240,24 +296,28 @@ class _StatCard extends StatelessWidget {
               const Spacer(),
               if (badge != null)
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: badgeColor ?? Colors.green,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(badge!,
-                      style: const TextStyle(
-                          fontSize: 12, color: Colors.white)),
+                  child: Text(
+                    badge!,
+                    style: const TextStyle(fontSize: 12, color: Colors.white),
+                  ),
                 ),
             ],
           ),
           const SizedBox(height: 12),
           Text(title, style: const TextStyle(color: Colors.grey)),
           const SizedBox(height: 6),
-          Text(value,
-              style:
-                  const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
         ],
       ),
     );
@@ -281,14 +341,18 @@ class _TransactionTile extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            Text(time, style: const TextStyle(color: Colors.grey)),
-          ]),
-          Text(price,
-              style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 4),
+              Text(time, style: const TextStyle(color: Colors.grey)),
+            ],
+          ),
+          Text(
+            price,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
         ],
       ),
     );
