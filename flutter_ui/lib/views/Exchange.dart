@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_ui/views/exchange_invoice_page.dart';
+
 
 /// --------------------------------------------
 /// ExchangePage (LOCAL VERSION)
@@ -240,18 +242,32 @@ class _ExchangePageState extends State<ExchangePage> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          "Exchange confirmed.\nCustomer got: ${selectedPhone!['model']}",
-        ),
+    final exchangeData = {
+      "customer_name": personName.text.trim(),
+      "customer_phone": personPhone.text.trim(),
+      "customer_address": personAddress.text.trim(),
+
+      "incoming_phone": {
+        "model": incomingModel.text.trim(),
+        "brand": incomingBrand.text.trim(),
+        "imei": incomingImei.text.trim(),
+        "storage": incomingStorage.text.trim(),
+        "color": incomingColor.text.trim(),
+        "selling_price": double.tryParse(incomingSellPrice.text.trim()) ?? 0,
+        "imageBytes": incomingImageBytes,
+      },
+
+      "outgoing_phone": selectedPhone,
+
+      "created_at": DateTime.now().toIso8601String(),
+    };
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ExchangeInvoicePage(exchange: exchangeData),
       ),
     );
-
-    // Optional: reset selection after confirming
-    setState(() {
-      selectedPhone = null;
-    });
   }
 
   @override
@@ -402,7 +418,8 @@ class _ExchangePageState extends State<ExchangePage> {
                     isNumber: true,
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) return "Required";
-                      if (v.trim().length != 16) return "IMEI must be 16 digits";
+                      if (v.trim().length != 16)
+                        return "IMEI must be 16 digits";
                       return null;
                     },
                   ),
@@ -544,7 +561,7 @@ class _ExchangePageState extends State<ExchangePage> {
                             image: selectedPhone!["imageBytes"] != null
                                 ? MemoryImage(selectedPhone!["imageBytes"])
                                 : const AssetImage("assets/placeholder.png")
-                                    as ImageProvider,
+                                      as ImageProvider,
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -564,14 +581,22 @@ class _ExchangePageState extends State<ExchangePage> {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Text("Brand: ${selectedPhone!["brand"]}",
-                                style: const TextStyle(color: Colors.grey)),
-                            Text("Color: ${selectedPhone!["color"]}",
-                                style: const TextStyle(color: Colors.grey)),
-                            Text("IMEI: ${selectedPhone!["imei"]}",
-                                style: const TextStyle(color: Colors.grey)),
-                            Text("Storage: ${selectedPhone!["storage"]}",
-                                style: const TextStyle(color: Colors.grey)),
+                            Text(
+                              "Brand: ${selectedPhone!["brand"]}",
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                            Text(
+                              "Color: ${selectedPhone!["color"]}",
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                            Text(
+                              "IMEI: ${selectedPhone!["imei"]}",
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                            Text(
+                              "Storage: ${selectedPhone!["storage"]}",
+                              style: const TextStyle(color: Colors.grey),
+                            ),
                           ],
                         ),
                       ),
@@ -621,7 +646,8 @@ class _ExchangePageState extends State<ExchangePage> {
         controller: c,
         keyboardType: isNumber ? TextInputType.number : TextInputType.text,
         decoration: _decoration(label),
-        validator: validator ?? (v) => v == null || v.isEmpty ? "Required" : null,
+        validator:
+            validator ?? (v) => v == null || v.isEmpty ? "Required" : null,
       ),
     );
   }
@@ -632,9 +658,7 @@ class _ExchangePageState extends State<ExchangePage> {
       labelText: label,
       filled: true,
       fillColor: const Color(0xFF0E1A25),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
     );
   }
 }

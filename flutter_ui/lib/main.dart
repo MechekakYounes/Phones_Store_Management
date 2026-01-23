@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ui/views/DashBoard.dart';
 import 'package:flutter_ui/views/Exchange.dart';
+import 'package:flutter_ui/views/History.dart';
 import 'package:flutter_ui/views/Login.dart';
 import 'package:flutter_ui/views/Phone_Inventory.dart';
 import 'package:flutter_ui/views/Sales.dart';
@@ -29,7 +30,8 @@ class ShopManagerApp extends StatelessWidget {
         '/dashboard': (_) => DashboardPage(),
         '/inventory': (_) => InventoryPage(), 
         '/sale': (_) => SalePage(),
-        '/exchange': (_) => const ExchangePage(),
+        '/exchange': (_) => ExchangePage(),
+        '/history': (context) => HistoryPage(),
       },
     );
   }

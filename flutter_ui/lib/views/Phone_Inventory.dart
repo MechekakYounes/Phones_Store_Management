@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_ui/views/add_product_invoice_page.dart';
+
 
 /*
   AddSource:
@@ -137,6 +139,17 @@ class _InventoryPageState extends State<InventoryPage> {
       setState(() {
         inventory.add(newProduct);
       });
+
+      // ✅ Open invoice AFTER product is added
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => AddProductInvoicePage(
+            product: newProduct,
+            personInfo: newProduct["personInfo"], // optional if exists
+          ),
+        ),
+      );
     }
   }
 
@@ -250,11 +263,7 @@ class InventoryCard extends StatelessWidget {
   final Map<String, dynamic> product;
   final VoidCallback onSell;
 
-  const InventoryCard({
-    super.key,
-    required this.product,
-    required this.onSell,
-  });
+  const InventoryCard({super.key, required this.product, required this.onSell});
 
   @override
   Widget build(BuildContext context) {
@@ -481,13 +490,29 @@ class _AddProductPageState extends State<AddProductPage> {
         // Useful for later database integration
         "source": source.name,
       };
-
       if (!mounted) return;
-      Navigator.pop(context, product);
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed: $e")),
+
+      // if source is person we send person info, supplier can be null or custom
+      final personInfo = (source == AddSource.person)
+          ? {
+              "name": personName.text.trim(),
+              "phone": personPhone.text.trim(),
+              "address": personAddress.text.trim(),
+            }
+          : {"name": "Supplier Company", "phone": "", "address": ""};
+
+      // open invoice page
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              AddProductInvoicePage(product: product, personInfo: personInfo),
+        ),
       );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Failed: $e")));
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -667,9 +692,8 @@ class _AddProductPageState extends State<AddProductPage> {
                 _field(
                   storage,
                   "Storage",
-                  validator: (v) => v == null || v.trim().isEmpty
-                      ? "Storage required"
-                      : null,
+                  validator: (v) =>
+                      v == null || v.trim().isEmpty ? "Storage required" : null,
                 ),
               ],
 
@@ -757,7 +781,8 @@ class _AddProductPageState extends State<AddProductPage> {
         controller: c,
         keyboardType: isNumber ? TextInputType.number : TextInputType.text,
         decoration: _decoration(label),
-        validator: validator ?? (v) => v == null || v.isEmpty ? "Required" : null,
+        validator:
+            validator ?? (v) => v == null || v.isEmpty ? "Required" : null,
       ),
     );
   }

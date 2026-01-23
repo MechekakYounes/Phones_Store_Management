@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_ui/views/invoice_page.dart';
+
 
 /// ---------------------------------------------------------------------------
 /// LOCAL SALES STORAGE (TEMPORARY)
@@ -99,40 +101,27 @@ class _SalePageState extends State<SalePage> {
   ///   3) reduce product quantity in inventory
   void _completeSale(double total, double price) {
     final sale = {
-      // product identification (optional)
       "product_id": product?["id"],
-
-      // product details snapshot (so sale keeps details even if product changes later)
       "model": product?["name"] ?? product?["model"] ?? "Unknown",
       "imei": product?["imei"],
       "storage": product?["storage"],
       "color": product?["color"],
-
-      // sale financials
       "price": price,
       "discount": discount,
       "total": total,
-
-      // buyer details
       "buyer_name": buyerName.text.trim(),
       "buyer_phone": buyerPhone.text.trim(),
       "buyer_address": buyerAddress.text.trim(),
-
-      // store image bytes locally so we can show it later in sales history
       "imageBytes": product?["imageBytes"],
-
-      // timestamp
       "created_at": DateTime.now().toIso8601String(),
     };
 
     localSales.add(sale);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Sale completed successfully")),
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => InvoicePage(sale: sale)),
     );
-
-    /// return to inventory and refresh if needed
-    Navigator.pop(context, true);
   }
 
   @override
@@ -155,8 +144,10 @@ class _SalePageState extends State<SalePage> {
     // PRICE CALCULATION
     // -------------------------------------------------------------------------
     /// Handles both possible keys: sellPrice or selling_price
-    final double price = double.tryParse(
-          (product?["sellPrice"] ?? product?["selling_price"] ?? "0").toString(),
+    final double price =
+        double.tryParse(
+          (product?["sellPrice"] ?? product?["selling_price"] ?? "0")
+              .toString(),
         ) ??
         0;
 
@@ -405,9 +396,7 @@ class _SalePageState extends State<SalePage> {
           labelText: label,
           filled: true,
           fillColor: const Color(0xFF1C2B3A),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
         validator: validator,
       ),
