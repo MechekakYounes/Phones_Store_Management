@@ -27,7 +27,7 @@ class ShopManagerApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFF0E1A25),
         primaryColor: Colors.blue,
       ),
-      initialRoute: '/login',
+      initialRoute: '/dashboard',
       routes: {
         '/login': (_) => Login(),
         '/register': (_) => Register() ,
