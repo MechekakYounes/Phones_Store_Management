@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_ui/diags/logout_diag.dart';
+import 'package:flutter_ui/core/services/auth_service.dart';
+import 'package:flutter_ui/views/Login.dart';
+
 
 /// DashboardPage:
 /// - Shows business overview
@@ -20,7 +24,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   /// Navigate based on selected index
-  void _navigate(int index) {
+  void _navigate (int index) async {
     setState(() => selectedIndex = index);
 
     if (index == 1) {
@@ -29,10 +33,27 @@ class _DashboardPageState extends State<DashboardPage> {
     if (index == 2) {
       Navigator.pushNamed(context, '/history');
     }
-    if (index == 3) {
-      // logout for later
+    if (index == 3) { // Logout tab
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => const LogoutDialog(),
+    );
+
+    if (confirm == true) {
+      final success = await AuthService().logout();
+
+      if (success && context.mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) =>  Login()),
+          (route) => false,
+        );
+      }
     }
+    return;
   }
+  }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +65,7 @@ class _DashboardPageState extends State<DashboardPage> {
           children: const [
             Icon(Icons.phone_android),
             SizedBox(width: 10),
-            Text("Phone Store"),
+            Text("Rabah Phone Store"),
           ],
         ),
         actions: [
