@@ -3,6 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\BuyPhoneController;
+
+
 
 // Public routes (no authentication needed)
 Route::get('/check-super-admin', [AuthController::class, 'checkSuperAdmin']);
@@ -16,6 +19,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::post('/update-profile', [AuthController::class, 'updateProfile']);
+
+    // BuyPhone routes
+    Route::apiResource('buy-phones', BuyPhoneController::class);
+    Route::post('buy-phones/{id}/mark-tested', [BuyPhoneController::class, 'markTested']);
+    Route::post('buy-phones/{id}/mark-listed', [BuyPhoneController::class, 'markListed']);
+    Route::post('buy-phones/{id}/mark-sold', [BuyPhoneController::class, 'markSold']);
+    Route::post('buy-phones/{id}/mark-returned', [BuyPhoneController::class, 'markReturned']);
+    Route::get('buy-phones-stats', [BuyPhoneController::class, 'stats']);
     
     // User management (super admin only)
     Route::middleware('super_admin')->group(function () {
