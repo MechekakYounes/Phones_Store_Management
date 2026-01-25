@@ -3,7 +3,6 @@ import 'package:flutter_ui/diags/logout_diag.dart';
 import 'package:flutter_ui/core/services/auth_service.dart';
 import 'package:flutter_ui/views/Login.dart';
 
-
 /// DashboardPage:
 /// - Shows business overview
 /// - Has navigation to inventory
@@ -24,7 +23,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   /// Navigate based on selected index
-  void _navigate (int index) async {
+  void _navigate(int index) async {
     setState(() => selectedIndex = index);
 
     if (index == 1) {
@@ -33,27 +32,27 @@ class _DashboardPageState extends State<DashboardPage> {
     if (index == 2) {
       Navigator.pushNamed(context, '/history');
     }
-    if (index == 3) { // Logout tab
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (_) => const LogoutDialog(),
-    );
+    if (index == 3) {
+      // Logout tab
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (_) => const LogoutDialog(),
+      );
 
-    if (confirm == true) {
-      final success = await AuthService().logout();
+      if (confirm == true) {
+        final success = await AuthService().logout();
 
-      if (success && context.mounted) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) =>  Login()),
-          (route) => false,
-        );
+        if (success && context.mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => Login()),
+            (route) => false,
+          );
+        }
       }
+      return;
     }
-    return;
   }
-  }
-  
 
   @override
   Widget build(BuildContext context) {
@@ -91,19 +90,19 @@ class _DashboardPageState extends State<DashboardPage> {
               onTap: _navigate,
               items: const [
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.dashboard),
+                  icon: Icon(Icons.dashboard, color: Colors.white),
                   label: 'Overview',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.inventory),
+                  icon: Icon(Icons.inventory, color: Colors.white),
                   label: 'Inventory',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.history),
+                  icon: Icon(Icons.history, color: Colors.white),
                   label: 'History',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(Icons.logout),
+                  icon: Icon(Icons.logout, color: Colors.white),
                   label: 'Logout',
                 ),
               ],
@@ -118,20 +117,26 @@ class _DashboardPageState extends State<DashboardPage> {
               onDestinationSelected: _navigate,
               destinations: const [
                 NavigationRailDestination(
-                  icon: Icon(Icons.dashboard),
-                  label: Text('Overview'),
+                  icon: Icon(Icons.dashboard, color: Colors.white),
+                  label: Text(
+                    'Overview',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
                 NavigationRailDestination(
-                  icon: Icon(Icons.inventory),
-                  label: Text('Inventory'),
+                  icon: Icon(Icons.inventory, color: Colors.white),
+                  label: Text(
+                    'Inventory',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
                 NavigationRailDestination(
-                  icon: Icon(Icons.history),
-                  label: Text('History'),
+                  icon: Icon(Icons.history, color: Colors.white),
+                  label: Text('History', style: TextStyle(color: Colors.white)),
                 ),
                 NavigationRailDestination(
-                  icon: Icon(Icons.logout),
-                  label: Text('Logout'),
+                  icon: Icon(Icons.logout, color: Colors.white),
+                  label: Text('Logout', style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
