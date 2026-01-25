@@ -91,9 +91,20 @@ class BuyPhone extends Model
                 $buyPhone->received_by = auth()->id();
             }
 
+            // Set default condition if not provided
+            if (empty($buyPhone->condition)) {
+                $buyPhone->condition = self::CONDITION_GOOD;
+            }
+
             // Auto-calculate resell price based on condition if not provided
-            if (!$buyPhone->resell_price) {
-                $buyPhone->resell_price = $buyPhone->calculateSuggestedResellPrice();
+            if (!$buyPhone->resell_price && $buyPhone->buy_price > 0) {
+                try {
+                    $buyPhone->resell_price = $buyPhone->calculateSuggestedResellPrice();
+                } catch (\Exception $e) {
+                    // If calculation fails, set a default multiplier
+                    \Log::warning('Failed to calculate resell price: ' . $e->getMessage());
+                    $buyPhone->resell_price = round($buyPhone->buy_price * 1.3, 2);
+                }
             }
         });
 
@@ -147,7 +158,16 @@ class BuyPhone extends Model
      */
     public function calculateSuggestedResellPrice(): float
     {
-        $multiplier = match($this->condition) {
+        // Ensure buy_price is valid
+        $buyPrice = $this->buy_price ?? 0;
+        if ($buyPrice <= 0) {
+            return 0;
+        }
+
+        // Get condition or use default
+        $condition = $this->condition ?? self::CONDITION_GOOD;
+
+        $multiplier = match($condition) {
             self::CONDITION_EXCELLENT => 1.5,
             self::CONDITION_VERY_GOOD => 1.4,
             self::CONDITION_GOOD => 1.3,
@@ -157,7 +177,7 @@ class BuyPhone extends Model
             default => 1.3,
         };
 
-        return round($this->buy_price * $multiplier, 2);
+        return round($buyPrice * $multiplier, 2);
     }
 
     /**

@@ -2,6 +2,9 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ui/views/add_product_invoice_page.dart';
+import 'package:flutter_ui/core/services/api_service.dart';
+import 'package:flutter_ui/core/services/auth_service.dart';
+import 'package:flutter_ui/views/DashBoard.dart';
 
 
 /*
@@ -389,6 +392,9 @@ class _AddProductPageState extends State<AddProductPage> {
   final TextEditingController quantity = TextEditingController(text: "1");
   final TextEditingController buyPrice = TextEditingController();
   final TextEditingController sellPrice = TextEditingController();
+  String conditionValue = "good"; // or from dropdown
+  TextEditingController notesController = TextEditingController();
+  TextEditingController issuesController = TextEditingController();
 
   // Extra customer fields when source is person
   final TextEditingController personName = TextEditingController();
@@ -417,24 +423,7 @@ class _AddProductPageState extends State<AddProductPage> {
   bool get isPhone => category == ProductCategory.phone;
   bool get isSupplier => source == AddSource.supplier;
 
-  @override
-  void dispose() {
-    // Dispose all controllers
-    model.dispose();
-    brand.dispose();
-    imei.dispose();
-    storage.dispose();
-    color.dispose();
-    quantity.dispose();
-    buyPrice.dispose();
-    sellPrice.dispose();
 
-    personName.dispose();
-    personPhone.dispose();
-    personAddress.dispose();
-
-    super.dispose();
-  }
 
   /*
     Picks an image using FilePicker.
@@ -468,55 +457,118 @@ class _AddProductPageState extends State<AddProductPage> {
         ApiService.addProduct(...)
   */
   Future<void> _submit() async {
+    // Validate form first
     if (!formKey.currentState!.validate()) return;
+
+    // Check brand selection
+    final brandIndex = brandsList.indexOf(brand.text);
+    if (brandIndex == -1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select a valid brand")),
+      );
+      return;
+    }
 
     setState(() => loading = true);
 
     try {
-      final product = {
-        "brand_id": brandsList.indexOf(brand.text) + 1,
-        "category_id": category.index + 1,
+      final auth = AuthService();
+
+      // 🔐 Must be logged in
+      if (!auth.isLoggedIn || auth.token == null || auth.user == null) {
+        if (!mounted) return;
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Session expired. Please login again.")),
+        );
+        
+        // Navigate to login page
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/login',
+          (route) => false,
+        );
+        return;
+      }
+
+      // Check if user ID exists
+      if (auth.user!['id'] == null) {
+        throw Exception("User not loaded. Please login again.");
+      }
+
+      // 🔁 Build API-compatible data
+      final productData = {
+        "seller_name": isSupplier
+            ? "Supplier Company"
+            : personName.text.trim(),
+
+        "seller_phone": isSupplier
+            ? ""
+            : personPhone.text.trim(),
+          
+
+        "brand_id": brandIndex + 1, // must match DB id
         "model": model.text.trim(),
-        "storage": isPhone ? storage.text.trim() : null,
-        "color": isPhone ? color.text.trim() : null,
-        "imei": isPhone ? imei.text.trim() : null,
-        "purchase_price": double.parse(buyPrice.text.trim()),
-        "selling_price": double.parse(sellPrice.text.trim()),
-        "quantity": isSupplier ? int.parse(quantity.text.trim()) : 1,
-
-        // Local image stored in memory
-        "imageBytes": pickedImageBytes,
-
-        // Useful for later database integration
-        "source": source.name,
+        "color": color.text.trim(),
+        "storage": storage.text.trim(),
+        "imei": imei.text.trim(),
+        "condition": conditionValue, // 👈 make sure this exists
+        "buy_price": double.parse(buyPrice.text.trim()),
+        "received_date": DateTime.now().toIso8601String().split('T')[0], // Send only date part (YYYY-MM-DD)
+        "resell_price": double.parse(sellPrice.text.trim()),
+        "received_by": auth.user!['id'],
+        "notes": notesController.text.trim().isEmpty ? null : notesController.text.trim(),
+        "issues": issuesController.text.trim().isEmpty ? null : issuesController.text.trim(),
       };
-      if (!mounted) return;
 
-      // if source is person we send person info, supplier can be null or custom
-      final personInfo = (source == AddSource.person)
-          ? {
-              "name": personName.text.trim(),
-              "phone": personPhone.text.trim(),
-              "address": personAddress.text.trim(),
-            }
-          : {"name": "Supplier Company", "phone": "", "address": ""};
+      // Call API
+      final response = await ApiService().addBuyPhone(productdata: productData);
 
-      // open invoice page
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) =>
-              AddProductInvoicePage(product: product, personInfo: personInfo),
-        ),
-      );
+      if (response['success'] == true) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Phone added successfully!")),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DashboardPage(),
+          ),
+        );
+      } else {
+        throw Exception(response['message'] ?? "Failed to add phone");
+      }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Failed: $e")));
+      if (!mounted) return;
+      
+      // Check if it's an authentication error
+      if (e.toString().contains('Session expired') || 
+          e.toString().contains('not authenticated') ||
+          e.toString().contains('401') ||
+          e.toString().contains('Unauthorized')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Session expired. Please login again.")),
+        );
+        
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/login',
+          (route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed: ${e.toString().replaceAll('Exception: ', '')}")),
+        );
+      }
     } finally {
       if (mounted) setState(() => loading = false);
     }
   }
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -665,7 +717,9 @@ class _AddProductPageState extends State<AddProductPage> {
                 items: brandsList
                     .map((b) => DropdownMenuItem(value: b, child: Text(b)))
                     .toList(),
-                onChanged: (v) => brand.text = v!,
+                onChanged: (v) {
+                  if (v != null) brand.text = v;
+                },
                 validator: (v) => v == null ? "Brand is required" : null,
               ),
 
@@ -682,10 +736,10 @@ class _AddProductPageState extends State<AddProductPage> {
                 ),
                 _field(
                   imei,
-                  "IMEI (16 digits)",
+                  "IMEI (15 digits)",
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) return "IMEI required";
-                    if (v.length != 16) return "IMEI must be 16 digits";
+                    if (v.length != 15) return "IMEI must be 15 digits";
                     return null;
                   },
                 ),
@@ -799,4 +853,24 @@ class _AddProductPageState extends State<AddProductPage> {
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
     );
   }
+
+    @override
+  void dispose() {
+    // Dispose all controllers
+    model.dispose();
+    brand.dispose();
+    imei.dispose();
+    storage.dispose();
+    color.dispose();
+    quantity.dispose();
+    buyPrice.dispose();
+    sellPrice.dispose();
+
+    personName.dispose();
+    personPhone.dispose();
+    personAddress.dispose();
+
+    super.dispose();
+  }
+
 }

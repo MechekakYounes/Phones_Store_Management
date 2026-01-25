@@ -20,10 +20,10 @@ return new class extends Migration
             $table->string('color')->nullable();
             $table->string('storage')->nullable();
             $table->string('imei', 15)->unique();
-            $table->string('condition')->default('good'); // good, very_good, excellent, broken, damaged
+            $table->string('condition')->nullable(); // good, very_good, excellent, broken, damaged
             $table->decimal('buy_price', 10, 2);
             $table->decimal('resell_price', 10, 2)->nullable();
-            $table->string('status')->default('received'); // received, tested, listed, sold, returned
+            $table->string('status')->nullable(); // received, tested, listed, sold, returned
             $table->text('notes')->nullable();
             $table->text('issues')->nullable(); // Any issues found during testing
             $table->date('received_date')->nullable();
