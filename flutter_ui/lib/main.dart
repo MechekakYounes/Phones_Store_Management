@@ -6,9 +6,13 @@ import 'package:flutter_ui/views/Login.dart';
 import 'package:flutter_ui/views/Phone_Inventory.dart';
 import 'package:flutter_ui/views/Sales.dart';
 import 'package:flutter_ui/views/register.dart';
+import 'package:flutter_ui/core/services/auth_service.dart';
 
-void main() {
-  runApp(const ShopManagerApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AuthService().init(); 
+  runApp(const ShopManagerApp()); 
+
 }
 
 class ShopManagerApp extends StatelessWidget {

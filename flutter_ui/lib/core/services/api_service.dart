@@ -37,7 +37,7 @@ class ApiService {
       
       final response = await _client.post(
         url,
-        headers: ApiConfig.headers,
+        headers: ApiConfig.defaultHeaders(),
         body: json.encode({
           'username': username,
           'password': password,
@@ -111,7 +111,7 @@ class ApiService {
       
       final response = await _client.post(
         url,
-        headers: ApiConfig.headers,
+        headers: ApiConfig.defaultHeaders(),
         body: json.encode({
           'name': name,
           'username': username,
@@ -127,7 +127,62 @@ class ApiService {
       throw ApiException(message: 'Network error: $e');
     }
   }
+
+  /// Add a new phone purchase entry
+  Future<Map<String, dynamic>> addBuyPhone({
+    required Map<String, dynamic> productdata,
+    }) async {
+    try {
+      final url = Uri.parse('${ApiConfig.baseUrl}/buy-phones');
+
+      // Get latest token from AuthService
+      final headers = ApiConfig.currentAuthHeaders();
+
+      // Build request body with only the fields that exist
+      final requestBody = <String, dynamic>{
+        'seller_name': productdata['seller_name'],
+        'seller_phone': productdata['seller_phone'] ?? '',
+        'brand_id': productdata['brand_id'],
+        'model': productdata['model'],
+        'color': productdata['color'],
+        'storage': productdata['storage'],
+        'imei': productdata['imei'],
+        'condition': productdata['condition'],
+        'buy_price': productdata['buy_price'],
+        'resell_price': productdata['resell_price'],
+        'received_by': productdata['received_by'],
+      };
+
+      // Add optional fields only if they exist and are not null
+      if (productdata['received_date'] != null) {
+        requestBody['received_date'] = productdata['received_date'];
+      }
+      if (productdata['notes'] != null) {
+        requestBody['notes'] = productdata['notes'];
+      }
+      if (productdata['issues'] != null) {
+        requestBody['issues'] = productdata['issues'];
+      }
+
+      final response = await _client.post(
+        url,
+        headers: headers,
+        body: jsonEncode(requestBody),
+      ).timeout(ApiConfig.timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      if (e.toString().contains('not authenticated') || 
+          e.toString().contains('User not authenticated')) {
+        throw ApiException(message: 'Session expired. Please login again.', statusCode: 401);
+      }
+      throw ApiException(message: 'Network error: $e');
+    }
+  }
+
 }
+
 
 /// Custom exception class for API errors
 class ApiException implements Exception {
@@ -155,4 +210,7 @@ class ApiException implements Exception {
     }
     return message;
   }
+
+
+
 }
