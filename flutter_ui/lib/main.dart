@@ -3,7 +3,7 @@ import 'package:flutter_ui/views/DashBoard.dart';
 import 'package:flutter_ui/views/Exchange.dart';
 import 'package:flutter_ui/views/History.dart';
 import 'package:flutter_ui/views/Login.dart';
-import 'package:flutter_ui/views/Phone_Inventory.dart';
+import 'package:flutter_ui/views/phone_inventory.dart';
 import 'package:flutter_ui/views/Sales.dart';
 import 'package:flutter_ui/views/register.dart';
 import 'package:flutter_ui/core/services/auth_service.dart';

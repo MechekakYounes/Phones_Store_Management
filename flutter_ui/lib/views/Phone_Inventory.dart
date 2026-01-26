@@ -85,15 +85,7 @@ class _InventoryPageState extends State<InventoryPage> {
     super.dispose();
   }
 
-  void _openSellDialog(Map<String, dynamic> phone) {
-  showDialog(
-    context: context,
-    builder: (_) => SellDialog(
-      product: phone,
-      onSold: _loadInventory, // your refresh function
-    ),
-  );
-}
+
 
   /// Load inventory from API
   Future<void> _loadInventory() async {
@@ -158,6 +150,16 @@ class _InventoryPageState extends State<InventoryPage> {
           color.contains(q) ||
           sellerName.contains(q);
     }).toList();
+  }
+
+  Future<void> _openSalePage (Map<String, dynamic> phone) async {
+    final result = await Navigator.pushNamed(context,
+      '/sale',
+      arguments: phone['id'],
+      );
+      if (result == true) {
+         _loadInventory(); //reload after invoice is closed
+      }  
   }
 
   /*
@@ -271,17 +273,12 @@ class _InventoryPageState extends State<InventoryPage> {
                               itemCount: list.length,
                               itemBuilder: (_, i) => InventoryCard(
                                 product: list[i],
-                                onSell: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    '/sale',
-                                    arguments: list[i],
-                                  );
-                                },
-                              ),
+                                onSell:() => _openSalePage(list[i]),
+                              
                             ),
                           ),
           ),
+          )
         ],
       ),
     );
@@ -956,7 +953,8 @@ class _AddProductPageState extends State<AddProductPage> {
     quantity.dispose();
     buyPrice.dispose();
     sellPrice.dispose();
-
+    notesController.dispose();
+    issuesController.dispose();
     personName.dispose();
     personPhone.dispose();
     personAddress.dispose();

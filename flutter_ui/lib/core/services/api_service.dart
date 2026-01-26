@@ -242,6 +242,22 @@ class ApiService {
       throw ApiException(message: 'Network error: $e');
     }
   }
+  
+  Future<Map<String, dynamic>> getBuyPhoneById(int id) async {
+  try {
+    final url = Uri.parse('${ApiConfig.baseUrl}/buy-phones/$id');
+    final headers = ApiConfig.currentAuthHeaders();
+
+    final response = await _client.get(url, headers: headers)
+        .timeout(ApiConfig.timeout);
+
+    return _handleResponse(response);
+  } catch (e) {
+    if (e is ApiException) rethrow;
+    throw ApiException(message: 'Failed to load phone');
+  }
+}
+
 
 
 }
