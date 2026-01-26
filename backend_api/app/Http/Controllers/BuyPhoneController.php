@@ -14,12 +14,12 @@ class BuyPhoneController extends Controller
     {
         $query = BuyPhone::with(['brand', 'receiver', 'buyer', 'exchange']);
 
-        // 🔍 Search
+        //Search
         if ($request->filled('search')) {
             $query->search($request->search);
         }
 
-        // 🎯 Filters
+        // Filters
         if ($request->filled('status')) {
             if ($request->status === 'sold') {
                 $query->sold();
@@ -180,40 +180,30 @@ class BuyPhoneController extends Controller
             'data' => $phone
         ]);
     }
+    // POST /api/buy-phones/{id}/sell
+    public function sell(Request $request, $id)
+{
+    $phone = BuyPhone::findOrFail($id);
 
-    // POST /api/buy-phones/{id}/mark-tested
-    public function markTested(Request $request, $id)
-    {
-        $phone = BuyPhone::findOrFail($id);
-        $phone->markAsTested($request->issues);
-
+    if ($phone->status === 'sold') {
         return response()->json([
-            'success' => true,
-            'message' => 'Phone marked as tested'
-        ]);
+            'success' => false,
+            'message' => 'Phone already sold'
+        ], 400);
     }
 
-    // POST /api/buy-phones/{id}/mark-listed
-    public function markListed($id)
-    {
-        BuyPhone::findOrFail($id)->markAsListed();
+    $phone->status = 'sold';
+    $phone->sold_price = $request->sold_price;
+    $phone->sold_at = now();
+    $phone->sold_by = auth()->user()->name ?? 'System';
+    $phone->save();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Phone listed for sale'
-        ]);
-    }
-
-    // POST /api/buy-phones/{id}/mark-sold
-    public function markSold(Request $request, $id)
-    {
-        BuyPhone::findOrFail($id)->markAsSold($request->customer_id);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Phone marked as sold'
-        ]);
-    }
+    return response()->json([
+        'success' => true,
+        'message' => 'Phone sold successfully',
+        'data' => $phone
+    ]);
+}
 
     // POST /api/buy-phones/{id}/mark-returned
     public function markReturned($id)

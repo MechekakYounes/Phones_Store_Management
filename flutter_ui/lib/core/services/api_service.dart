@@ -128,6 +128,41 @@ class ApiService {
     }
   }
 
+  /// Get all buy phones (inventory)
+  Future<Map<String, dynamic>> getBuyPhones({
+    String? search,
+    String? status,
+    String? condition,
+    int? brandId,
+  }) async {
+    try {
+      final url = Uri.parse('${ApiConfig.baseUrl}/buy-phones').replace(
+        queryParameters: {
+          if (search != null && search.isNotEmpty) 'search': search,
+          if (status != null) 'status': status,
+          if (condition != null) 'condition': condition,
+          if (brandId != null) 'brand_id': brandId.toString(),
+        },
+      );
+
+      final headers = ApiConfig.currentAuthHeaders();
+
+      final response = await _client.get(
+        url,
+        headers: headers,
+      ).timeout(ApiConfig.timeout);
+
+      return _handleResponse(response);
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      if (e.toString().contains('not authenticated') || 
+          e.toString().contains('User not authenticated')) {
+        throw ApiException(message: 'Session expired. Please login again.', statusCode: 401);
+      }
+      throw ApiException(message: 'Network error: $e');
+    }
+  }
+
   /// Add a new phone purchase entry
   Future<Map<String, dynamic>> addBuyPhone({
     required Map<String, dynamic> productdata,
@@ -180,6 +215,34 @@ class ApiService {
       throw ApiException(message: 'Network error: $e');
     }
   }
+
+  /// Sell a phone
+  Future<Map<String, dynamic>> sellPhone({
+    required String id,
+    required double soldPrice,
+  }) async {
+    try {
+      final url = Uri.parse('${ApiConfig.baseUrl}/buy-phones/$id/sell');
+      final headers = ApiConfig.currentAuthHeaders();
+      final response = await _client.post(
+        url,
+        headers: headers,
+        body: jsonEncode({
+          'sold_price': soldPrice,
+        }),
+      ).timeout(ApiConfig.timeout);
+      return _handleResponse(response);
+    }
+    catch (e) {
+      if (e is ApiException) rethrow;
+      if (e.toString().contains('not authenticated') || 
+          e.toString().contains('User not authenticated')) {
+        throw ApiException(message: 'Session expired. Please login again.', statusCode: 401);
+      }
+      throw ApiException(message: 'Network error: $e');
+    }
+  }
+
 
 }
 

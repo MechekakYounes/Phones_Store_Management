@@ -21,7 +21,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/update-profile', [AuthController::class, 'updateProfile']);
 
     // BuyPhone routes
-    Route::apiResource('buy-phones', BuyPhoneController::class);
+    Route::get('buy-phones', [BuyPhoneController::class, 'index']);
+    Route::get('buy-phones/{id}', [BuyPhoneController::class, 'show']);
+    Route::post('buy-phones', [BuyPhoneController::class, 'store']);
+    Route::put('buy-phones/{id}', [BuyPhoneController::class, 'update']);
+    Route::delete('buy-phones/{id}', [BuyPhoneController::class, 'destroy']);
+    Route::post('/buy-phones/{id}/sell', [BuyPhoneController::class, 'sell']);
     Route::post('buy-phones/{id}/mark-tested', [BuyPhoneController::class, 'markTested']);
     Route::post('buy-phones/{id}/mark-listed', [BuyPhoneController::class, 'markListed']);
     Route::post('buy-phones/{id}/mark-sold', [BuyPhoneController::class, 'markSold']);

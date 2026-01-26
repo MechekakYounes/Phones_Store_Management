@@ -5,6 +5,7 @@ import 'package:flutter_ui/views/add_product_invoice_page.dart';
 import 'package:flutter_ui/core/services/api_service.dart';
 import 'package:flutter_ui/core/services/auth_service.dart';
 import 'package:flutter_ui/views/DashBoard.dart';
+import 'package:flutter_ui/diags/sell_diag.dart';
 
 
 /*
@@ -59,27 +60,25 @@ class InventoryPage extends StatefulWidget {
 }
 
 class _InventoryPageState extends State<InventoryPage> {
-  /*
-    This local list holds all products in memory.
-
-    Each product is a Map<String, dynamic> with keys such as:
-      - brand_id
-      - category_id
-      - model
-      - storage
-      - color
-      - imei
-      - purchase_price
-      - selling_price
-      - quantity
-      - imageBytes (Uint8List?)
-      - source
-  */
-  final List<Map<String, dynamic>> inventory = [];
+  // API-fetched inventory list
+  List<Map<String, dynamic>> inventory = [];
+  
+  // Loading and error states
+  bool isLoading = false;
+  String? errorMessage;
 
   // Search input controller and current query
   final TextEditingController searchController = TextEditingController();
   String searchQuery = "";
+  
+  // Debounce timer for search
+  DateTime? _lastSearchTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInventory();
+  }
 
   @override
   void dispose() {
@@ -88,21 +87,61 @@ class _InventoryPageState extends State<InventoryPage> {
     super.dispose();
   }
 
+  void _openSellDialog(Map<String, dynamic> phone) {
+  showDialog(
+    context: context,
+    builder: (_) => SellDialog(
+      product: phone,
+      onSold: _loadInventory, // your refresh function
+    ),
+  );
+}
+
+  /// Load inventory from API
+  Future<void> _loadInventory() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      final response = await ApiService().getBuyPhones(
+        search: searchQuery.trim().isNotEmpty ? searchQuery.trim() : null,
+      );
+
+      if (response['success'] == true) {
+        final data = response['data'];
+        List<Map<String, dynamic>> phones = [];
+
+        // Handle paginated response
+        if (data['data'] != null) {
+          phones = List<Map<String, dynamic>>.from(data['data']);
+        } else if (data is List) {
+          phones = List<Map<String, dynamic>>.from(data);
+        }
+
+        setState(() {
+          inventory = phones;
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          errorMessage = response['message'] ?? 'Failed to load inventory';
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = e.toString().replaceAll('ApiException: ', '');
+        isLoading = false;
+      });
+    }
+  }
+
   /*
     filteredInventory:
     Returns the list of products that match the search query.
-
-    Search matches:
-      - model
-      - imei
-      - storage
-      - color
-
-    API Integration Later:
-      Replace this local filtering with an API call:
-      GET /products/search?q=<searchQuery>
-
-      Then you setState(() => inventory = responseFromApi)
+    For now, we do client-side filtering, but the API also supports search.
   */
   List<Map<String, dynamic>> get filteredInventory {
     if (searchQuery.trim().isEmpty) return inventory;
@@ -113,47 +152,27 @@ class _InventoryPageState extends State<InventoryPage> {
       final imei = (p["imei"] ?? "").toString().toLowerCase();
       final storage = (p["storage"] ?? "").toString().toLowerCase();
       final color = (p["color"] ?? "").toString().toLowerCase();
+      final sellerName = (p["seller_name"] ?? "").toString().toLowerCase();
 
       return model.contains(q) ||
           imei.contains(q) ||
           storage.contains(q) ||
-          color.contains(q);
+          color.contains(q) ||
+          sellerName.contains(q);
     }).toList();
   }
 
   /*
-    Opens the AddProductPage.
-
-    Local behavior:
-      AddProductPage returns the new product as a Map.
-      We insert the product into inventory and refresh UI.
-
-    API Integration Later:
-      Instead of returning a Map, you can call POST /products
-      and then reload inventory from the backend.
+    Opens the AddProductPage and refreshes inventory after adding.
   */
   void _openAddProduct() async {
-    final newProduct = await Navigator.push<Map<String, dynamic>>(
+    await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const AddProductPage()),
     );
 
-    if (newProduct != null) {
-      setState(() {
-        inventory.add(newProduct);
-      });
-
-      // ✅ Open invoice AFTER product is added
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => AddProductInvoicePage(
-            product: newProduct,
-            personInfo: newProduct["personInfo"], // optional if exists
-          ),
-        ),
-      );
-    }
+    // Refresh inventory after returning from AddProductPage
+    _loadInventory();
   }
 
   @override
@@ -162,19 +181,32 @@ class _InventoryPageState extends State<InventoryPage> {
     final list = filteredInventory;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Inventory")),
+      appBar: AppBar(
+        title: const Text("Inventory"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadInventory,
+            tooltip: 'Refresh',
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _openAddProduct,
         child: const Icon(Icons.add),
       ),
       body: Column(
         children: [
-          // Search bar to filter products locally
+          // Search bar to filter products
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
             child: TextField(
               controller: searchController,
-              onChanged: (value) => setState(() => searchQuery = value),
+              onChanged: (value) {
+                setState(() => searchQuery = value);
+                // Optionally trigger API search with debounce
+                // For now, we do client-side filtering
+              },
               decoration: InputDecoration(
                 hintText: "Search by model / IMEI / storage / color...",
                 filled: true,
@@ -202,44 +234,55 @@ class _InventoryPageState extends State<InventoryPage> {
 
           /*
             Main body:
-            If list is empty, show a "No products found" message.
-            Otherwise show the products using ListView.builder.
+            Show loading, error, or the list of products.
           */
           Expanded(
-            child: list.isEmpty
+            child: isLoading
                 ? const Center(
-                    child: Text(
-                      "No products found.",
-                      style: TextStyle(color: Colors.grey),
-                    ),
+                    child: CircularProgressIndicator(),
                   )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: list.length,
-                    itemBuilder: (_, i) => InventoryCard(
-                      product: list[i],
-
-                      /*
-                        Sell button navigation:
-
-                        Sends the full product Map to SalePage
-                        using Navigator arguments.
-
-                        API Integration Later:
-                          SalePage should call:
-                          POST /sales
-                          and update product quantity using:
-                          PATCH /products/<id>
-                      */
-                      onSell: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/sale',
-                          arguments: list[i],
-                        );
-                      },
-                    ),
-                  ),
+                : errorMessage != null
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              errorMessage!,
+                              style: const TextStyle(color: Colors.red),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: _loadInventory,
+                              child: const Text("Retry"),
+                            ),
+                          ],
+                        ),
+                      )
+                    : list.isEmpty
+                        ? const Center(
+                            child: Text(
+                              "No products found.",
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          )
+                        : RefreshIndicator(
+                            onRefresh: _loadInventory,
+                            child: ListView.builder(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: list.length,
+                              itemBuilder: (_, i) => InventoryCard(
+                                product: list[i],
+                                onSell: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/sale',
+                                    arguments: list[i],
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
           ),
         ],
       ),
@@ -268,10 +311,29 @@ class InventoryCard extends StatelessWidget {
 
   const InventoryCard({super.key, required this.product, required this.onSell});
 
+
   @override
   Widget build(BuildContext context) {
     // Read image bytes stored locally (works on Flutter web + mobile)
     final Uint8List? imageBytes = product["imageBytes"];
+
+    // Get brand name (could be from brand object or brand_id)
+    String brandName = "";
+    if (product["brand"] != null && product["brand"] is Map) {
+      brandName = product["brand"]["name"] ?? "";
+    }
+
+    // Get model name
+    final modelName = product["model"]?.toString() ?? "Unknown";
+    
+    // Get price (API uses resell_price, local might use selling_price)
+  final price = double.tryParse(
+  (product["resell_price"] ?? product["selling_price"] ?? 0).toString(),
+) ?? 0.0;
+
+    
+    // Get status if available
+    final status = product["status"]?.toString() ?? "";
 
     // If bytes exist -> MemoryImage, else -> placeholder
     final ImageProvider imageProvider = imageBytes != null
@@ -303,9 +365,11 @@ class InventoryCard extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Brand and Model
                 Text(
-                  product["model"]?.toString() ?? "Unknown",
+                  brandName.isNotEmpty ? "$brandName $modelName" : modelName,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -317,17 +381,26 @@ class InventoryCard extends StatelessWidget {
                 if ((product["color"] ?? "").toString().isNotEmpty)
                   Text(
                     "Color: ${product["color"]}",
-                    style: const TextStyle(color: Colors.grey),
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                 if ((product["imei"] ?? "").toString().isNotEmpty)
                   Text(
                     "IMEI: ${product["imei"]}",
-                    style: const TextStyle(color: Colors.grey),
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                 if ((product["storage"] ?? "").toString().isNotEmpty)
                   Text(
                     "Storage: ${product["storage"]}",
-                    style: const TextStyle(color: Colors.grey),
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
+                if (status.isNotEmpty)
+                  Text(
+                    "Status: ${status.toUpperCase()}",
+                    style: TextStyle(
+                      color: _getStatusColor(status),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
               ],
             ),
@@ -338,19 +411,39 @@ class InventoryCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                "\$${product["selling_price"] ?? "0"}",
+                "\$${price.toStringAsFixed(2)}",
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 6),
-              ElevatedButton(onPressed: onSell, child: const Text("Sell")),
+              ElevatedButton(
+                onPressed: onSell,
+                child: const Text("Sell"),
+              ),
             ],
           ),
         ],
       ),
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'sold':
+        return Colors.green;
+      case 'listed':
+        return Colors.blue;
+      case 'tested':
+        return Colors.orange;
+      case 'received':
+        return Colors.yellow;
+      case 'returned':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
   }
 }
 
