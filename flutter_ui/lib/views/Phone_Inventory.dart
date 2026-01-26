@@ -1,11 +1,9 @@
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_ui/views/add_product_invoice_page.dart';
 import 'package:flutter_ui/core/services/api_service.dart';
 import 'package:flutter_ui/core/services/auth_service.dart';
 import 'package:flutter_ui/views/DashBoard.dart';
-import 'package:flutter_ui/diags/sell_diag.dart';
 
 
 /*
