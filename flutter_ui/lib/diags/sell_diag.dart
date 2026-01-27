@@ -1,78 +1,37 @@
 import 'package:flutter/material.dart';
-import '../core/services/api_service.dart';
 
-class SellDialog extends StatefulWidget {
+class SellDialog extends StatelessWidget {
   final Map<String, dynamic> product;
-  final VoidCallback onSold;
 
-  const SellDialog({
-    super.key,
-    required this.product,
-    required this.onSold,
-  });
-
-  @override
-  State<SellDialog> createState() => _SellDialogState();
-}
-
-class _SellDialogState extends State<SellDialog> {
-  final TextEditingController _priceController = TextEditingController();
-  bool _loading = false;
-
-  @override
-  void dispose() {
-    _priceController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submit() async {
-    final soldPrice = double.tryParse(_priceController.text);
-    if (soldPrice == null) return;
-
-    setState(() => _loading = true);
-
-    try {
-      await ApiService().sellPhone(
-        id: widget.product['id'],
-        soldPrice: soldPrice,
-      );
-
-      widget.onSold();        // refresh inventory
-      Navigator.pop(context); // close dialog
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Sell failed: $e")),
-      );
-    } finally {
-      setState(() => _loading = false);
-    }
-  }
+  const SellDialog({super.key, required this.product});
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text("Sell Phone"),
-      content: TextField(
-        controller: _priceController,
-        keyboardType: TextInputType.number,
-        decoration: const InputDecoration(
-          labelText: "Sold Price",
-        ),
+      title: const Text("Confirm Sale"),
+      content: Text(
+        "Do you want to sell this phone?\n\n"
+        "Model: ${product['model']}\n"
+        "IMEI: ${product['imei']}\n"
+        "Price: \$${product['resell_price'] ?? product['selling_price']}",
       ),
       actions: [
         TextButton(
-          onPressed: _loading ? null : () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(context),
           child: const Text("Cancel"),
         ),
         ElevatedButton(
-          onPressed: _loading ? null : _submit,
-          child: _loading
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text("Confirm"),
+          onPressed: () {
+            Navigator.pop(context); // close dialog
+
+            // Go to SalePage (full sale workflow)
+            Navigator.pushNamed(
+              context,
+              '/sale',
+              arguments: product['id'], // only pass the ID
+            );
+          },
+          child: const Text("Confirm"),
         ),
       ],
     );

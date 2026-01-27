@@ -27,10 +27,10 @@ class SuperAdminSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        $this->command->info('✅ Super Admin created successfully!');
-        $this->command->info('👤 Username: superadmin');
-        $this->command->info('🔑 Password: admin123');
-        $this->command->warn('⚠️  Please change the password immediately!');
+        $this->command->info('Super Admin created successfully!');
+        $this->command->info('Username: superadmin');
+        $this->command->info('Password: admin123');
+        $this->command->warn(' Please change the password immediately!');
 
         // Create some test users
         User::create([

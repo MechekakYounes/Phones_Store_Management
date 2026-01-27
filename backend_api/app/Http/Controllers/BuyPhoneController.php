@@ -53,7 +53,7 @@ class BuyPhoneController extends Controller
     // GET /api/buy-phones/{id}
     public function show($id)
     {
-        $phone = BuyPhone::with(['brand', 'receiver', 'buyer', 'exchange'])->findOrFail($id);
+        $phone = BuyPhone::findOrFail($id);
 
         return response()->json([
             'success' => true,
@@ -91,6 +91,7 @@ class BuyPhoneController extends Controller
                 'resell_price'  => 'nullable|numeric|min:0',
                 'received_date' => 'nullable|date',
                 'received_by'   => 'nullable|exists:users,id',
+                'status'        => 'nullable|string',
                 'notes'         => 'nullable|string',
                 'issues'        => 'nullable|string',
             ]);
@@ -108,6 +109,9 @@ class BuyPhoneController extends Controller
             // Ensure condition is set (required for resell price calculation)
             if (empty($validated['condition'])) {
                 $validated['condition'] = 'good'; // Default condition
+            }
+            if (empty($validated['status'])) {
+                $validated['status'] = 'received'; // Default condition
             }
 
             // The model's boot method will auto-calculate resell_price if not provided

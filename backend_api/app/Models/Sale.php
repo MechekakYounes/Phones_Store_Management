@@ -7,11 +7,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Sale extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     /**
      * The attributes that are mass assignable.
@@ -22,11 +21,7 @@ class Sale extends Model
         'customer_id',
         'total_amount',
         'discount_amount',
-        'tax_amount',
         'grand_total',
-        'paid_amount',
-        'change_amount',
-        'sale_number',
         'payment_status',
         'payment_method',
         'notes',
@@ -41,10 +36,7 @@ class Sale extends Model
     protected $casts = [
         'total_amount' => 'decimal:2',
         'discount_amount' => 'decimal:2',
-        'tax_amount' => 'decimal:2',
         'grand_total' => 'decimal:2',
-        'paid_amount' => 'decimal:2',
-        'change_amount' => 'decimal:2',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
@@ -58,56 +50,8 @@ class Sale extends Model
     const PAYMENT_PAID = 'paid';
     const PAYMENT_CANCELLED = 'cancelled';
 
-    /**
-     * Payment method constants
-     */
-    const METHOD_CASH = 'cash';
-    const METHOD_CARD = 'card';
-    const METHOD_BANK_TRANSFER = 'bank_transfer';
-    const METHOD_MOBILE_MONEY = 'mobile_money';
 
-    /**
-     * Boot the model.
-     */
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($sale) {
-            // Generate sale number if not provided
-            if (!$sale->sale_number) {
-                $sale->sale_number = 'SALE-' . date('Ymd') . '-' . str_pad(Sale::count() + 1, 4, '0', STR_PAD_LEFT);
-            }
-
-            // Set created_by if not provided and user is authenticated
-            if (!$sale->created_by && auth()->check()) {
-                $sale->created_by = auth()->id();
-            }
-        });
-
-        static::saved(function ($sale) {
-            // Update payment status based on paid amount
-            if ($sale->isDirty('paid_amount')) {
-                $sale->updatePaymentStatus();
-            }
-
-            // Recalculate totals when sale items change
-            if ($sale->wasChanged() || $sale->wasRecentlyCreated) {
-                $sale->recalculateTotals();
-            }
-        });
-
-        static::created(function ($sale) {
-            // Update product quantities and buy_phone status
-            $sale->updateInventory();
-        });
-
-        static::deleting(function ($sale) {
-            // Restore product quantities and buy_phone status when sale is deleted
-            $sale->restoreInventory();
-        });
-    }
-
+    
     /**
      * Get the customer associated with the sale.
      */
@@ -345,7 +289,7 @@ class Sale extends Model
      */
     public function scopeSearch($query, $searchTerm)
     {
-        return $query->where('sale_number', 'like', '%' . $searchTerm . '%')
+        return $query->where('notes', 'like', '%' . $searchTerm . '%')
                      ->orWhereHas('customer', function ($q) use ($searchTerm) {
                          $q->where('name', 'like', '%' . $searchTerm . '%')
                            ->orWhere('phone', 'like', '%' . $searchTerm . '%');
@@ -399,37 +343,5 @@ class Sale extends Model
     /**
      * Generate receipt data.
      */
-    public function getReceiptData(): array
-    {
-        return [
-            'sale_number' => $this->sale_number,
-            'date' => $this->created_at->format('d/m/Y H:i'),
-            'customer' => $this->customer ? [
-                'name' => $this->customer->name,
-                'phone' => $this->customer->phone,
-            ] : null,
-            'items' => $this->saleItems->map(function ($item) {
-                return [
-                    'description' => $item->description,
-                    'quantity' => $item->quantity,
-                    'unit_price' => $item->unit_price,
-                    'total_price' => $item->total_price,
-                ];
-            }),
-            'totals' => [
-                'subtotal' => $this->total_amount,
-                'discount' => $this->discount_amount,
-                'tax' => $this->tax_amount,
-                'grand_total' => $this->grand_total,
-                'paid_amount' => $this->paid_amount,
-                'change_amount' => $this->change_amount,
-                'balance' => $this->balance,
-            ],
-            'payment' => [
-                'method' => $this->payment_method,
-                'status' => $this->payment_status,
-            ],
-            'seller' => $this->creator->name,
-        ];
-    }
+    
 }

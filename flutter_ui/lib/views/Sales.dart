@@ -67,30 +67,46 @@ class _SalePageState extends State<SalePage> {
     super.dispose();
   }
 
-  void _completeSale(double total, double price) {
-    final sale = {
-      "product_id": product?["id"],
-      "model": product?["model"],
-      "imei": product?["imei"],
-      "storage": product?["storage"],
-      "color": product?["color"],
-      "price": price,
-      "discount": discount,
-      "total": total,
+ Future<void> _completeSale(double total, double price) async {
+  try {
+    final saleData = {
+      "buy_phone_id": product?["id"],
+      // Customer
       "buyer_name": buyerName.text.trim(),
       "buyer_phone": buyerPhone.text.trim(),
       "buyer_address": buyerAddress.text.trim(),
-      "imageBytes": product?["imageBytes"],
-      "created_at": DateTime.now().toIso8601String(),
+
+      // Sale amounts
+      "total_amount": price,
+      "discount_amount": discount,
+      // Payment
+      "notes": null,
     };
 
-    localSales.add(sale);
+    final response = await ApiService().sellPhone(saleData);
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => InvoicePage(sale: sale)),
+    if (response['success'] == true) {
+      final sale = response['sale'];       // from backend
+
+      // Go to invoice page with full data
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => InvoicePage(
+            sale: sale,
+          ),
+        ),
+      );
+    } else {
+      throw Exception(response['message'] ?? 'Sale failed');
+    }
+  } catch (e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Sale error: ${e.toString()}")),
     );
   }
+}
 
   @override
   Widget build(BuildContext context) {

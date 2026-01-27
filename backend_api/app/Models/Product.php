@@ -19,7 +19,6 @@ class Product extends Model
      */
     protected $fillable = [
         'brand_id',
-        'category_id',
         'model',
         'storage',
         'color',
@@ -50,13 +49,6 @@ class Product extends Model
         return $this->belongsTo(Brand::class);
     }
 
-    /**
-     * Get the category that owns the product.
-     */
-    public function category(): BelongsTo
-    {
-        return $this->belongsTo(Category::class);
-    }
 
     /**
      * Get the sale items for the product.

@@ -217,31 +217,18 @@ class ApiService {
   }
 
   /// Sell a phone
-  Future<Map<String, dynamic>> sellPhone({
-    required String id,
-    required double soldPrice,
-  }) async {
-    try {
-      final url = Uri.parse('${ApiConfig.baseUrl}/buy-phones/$id/sell');
-      final headers = ApiConfig.currentAuthHeaders();
-      final response = await _client.post(
-        url,
-        headers: headers,
-        body: jsonEncode({
-          'sold_price': soldPrice,
-        }),
-      ).timeout(ApiConfig.timeout);
-      return _handleResponse(response);
-    }
-    catch (e) {
-      if (e is ApiException) rethrow;
-      if (e.toString().contains('not authenticated') || 
-          e.toString().contains('User not authenticated')) {
-        throw ApiException(message: 'Session expired. Please login again.', statusCode: 401);
-      }
-      throw ApiException(message: 'Network error: $e');
-    }
-  }
+Future<Map<String, dynamic>> sellPhone(Map<String, dynamic> data) async {
+  final url = Uri.parse('${ApiConfig.baseUrl}/sales');
+
+  final response = await _client.post(
+    url,
+    headers: ApiConfig.currentAuthHeaders(),
+    body: json.encode(data),
+  ).timeout(ApiConfig.timeout);
+
+  return _handleResponse(response);
+}
+
   
   Future<Map<String, dynamic>> getBuyPhoneById(int id) async {
   try {

@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\BuyPhoneController;
+use App\Http\Controllers\SaleController;
 
 
 
@@ -32,6 +33,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('buy-phones/{id}/mark-sold', [BuyPhoneController::class, 'markSold']);
     Route::post('buy-phones/{id}/mark-returned', [BuyPhoneController::class, 'markReturned']);
     Route::get('buy-phones-stats', [BuyPhoneController::class, 'stats']);
+    
+    //sale routes 
+    Route::post('sales', [SaleController::class, 'store']);
     
     // User management (super admin only)
     Route::middleware('super_admin')->group(function () {

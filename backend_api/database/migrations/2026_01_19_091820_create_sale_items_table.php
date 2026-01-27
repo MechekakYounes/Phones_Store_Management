@@ -11,13 +11,12 @@ return new class extends Migration
     {
         Schema::create('sale_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('sale_id')->constrained()->onDelete('cascade');
-            $table->foreignId('product_id')->constrained()->onDelete('cascade');
-            $table->foreignId('buy_phone_id')->nullable()->constrained('buy_phones')->onDelete('set null');
+            $table->foreignId('sale_id')->nullable()->constrained("sales")->onDelete('cascade');
+            $table->foreignId('product_id')->nullable()->constrained("products")->onDelete('cascade');
+            $table->foreignId('buy_phone_id')->nullable()->constrained("buy_phones")->onDelete('set null');
             $table->integer('quantity');
             $table->decimal('unit_price', 10, 2);
             $table->decimal('total_price', 12, 2)->storedAs('quantity * unit_price');
-            $table->decimal('cost_price', 10, 2)->nullable(); // For profit calculation
             $table->timestamps();
             
             // Indexes for better performance

@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->foreignId('brand_id')->constrained('brands')->onDelete('cascade');
-            $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
             $table->string('model');
             $table->string('storage')->nullable(); // e.g., "128GB", "256GB"
             $table->string('color')->nullable();
@@ -24,7 +23,7 @@ return new class extends Migration
             $table->integer('quantity')->default(0);
             $table->timestamps();
             // indexes for better performance
-            $table->index(['brand_id', 'category_id']);
+            $table->index('brand_id');
             $table->index('imei');
             $table->index('model');
         });
