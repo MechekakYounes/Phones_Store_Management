@@ -11,44 +11,51 @@ class BuyPhoneController extends Controller
 {
     // GET /api/buy-phones
     public function index(Request $request)
-    {
-        $query = BuyPhone::with(['brand', 'receiver', 'buyer', 'exchange']);
+{
+    $query = BuyPhone::with(['brand', 'receiver', 'buyer', 'exchange']);
 
-        //Search
-        if ($request->filled('search')) {
-            $query->search($request->search);
-        }
-
-        // Filters
-        if ($request->filled('status')) {
-            if ($request->status === 'sold') {
-                $query->sold();
-            } elseif ($request->status === 'available') {
-                $query->available();
-            } elseif ($request->status === 'needs_testing') {
-                $query->needsTesting();
-            }
-        }
-
-        if ($request->filled('condition')) {
-            $query->byCondition($request->condition);
-        }
-
-        if ($request->filled('brand_id')) {
-            $query->byBrand($request->brand_id);
-        }
-
-        if ($request->filled('start_date')) {
-            $query->dateRange($request->start_date, $request->end_date);
-        }
-
-        $phones = $query->latest()->paginate(20);
-
-        return response()->json([
-            'success' => true,
-            'data' => $phones
-        ]);
+    // 🔹 Default: exclude sold phones
+    if (!$request->filled('status')) {
+        $query->where('status', '!=', BuyPhone::STATUS_SOLD)
+              ->orWhereNull('status');
     }
+
+    // 🔍 Search
+    if ($request->filled('search')) {
+        $query->search($request->search);
+    }
+
+    // 🔎 Filters
+    if ($request->filled('status')) {
+        if ($request->status === 'sold') {
+            $query->sold();
+        } elseif ($request->status === 'available') {
+            $query->available();
+        } elseif ($request->status === 'needs_testing') {
+            $query->needsTesting();
+        }
+    }
+
+    if ($request->filled('condition')) {
+        $query->byCondition($request->condition);
+    }
+
+    if ($request->filled('brand_id')) {
+        $query->byBrand($request->brand_id);
+    }
+
+    if ($request->filled('start_date')) {
+        $query->dateRange($request->start_date, $request->end_date);
+    }
+
+    $phones = $query->latest()->paginate(20);
+
+    return response()->json([
+        'success' => true,
+        'data' => $phones
+    ]);
+}
+
 
     // GET /api/buy-phones/{id}
     public function show($id)
