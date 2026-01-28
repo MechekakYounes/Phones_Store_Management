@@ -92,7 +92,14 @@ class BuyPhoneController extends Controller
                 'model'         => 'required|string|max:255',
                 'color'         => 'nullable|string|max:100',
                 'storage'       => 'nullable|string|max:50',
-                'imei'          => 'required|string|size:15',
+                'imei'          => [
+                                    Rule::requiredIf(fn () => $request->seller_name !== 'Supplier Company'),
+                                    'nullable',
+                                    'string',
+                                    'max:20',
+                                    'unique:buy_phones,imei',
+                                    Rule::unique('buy_phones', 'imei')->whereNotNull('imei')
+                                   ],
                 'condition'     => 'required|string|in:excellent,very_good,good,fair,damaged,broken',
                 'buy_price'     => 'required|numeric|min:0',
                 'resell_price'  => 'nullable|numeric|min:0',

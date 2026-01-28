@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('model');
             $table->string('color')->nullable();
             $table->string('storage')->nullable();
-            $table->string('imei', 15)->unique();
+            $table->string('imei', 15)->nullable()->unique();
             $table->string('condition')->nullable(); // good, very_good, excellent, broken, damaged
             $table->decimal('buy_price', 10, 2);
             $table->decimal('resell_price', 10, 2)->nullable();
