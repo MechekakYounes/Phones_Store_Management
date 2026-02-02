@@ -74,7 +74,7 @@ class BuyPhoneController extends Controller
         try {
             // Check IMEI existence with error handling
             try {
-                if (BuyPhone::imeiExists($request->imei)) {
+                if (BuyPhone::imeiExists($request->imei) && $request->imei !== null) {
                     return response()->json([
                         'success' => false,
                         'message' => 'IMEI already exists in inventory'

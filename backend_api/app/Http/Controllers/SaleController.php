@@ -83,8 +83,24 @@ class SaleController extends Controller
             return response()->json([
                 'success'  => true,
                 'message'  => 'Sale completed successfully',
-                'sale'     => $sale,
-                'customer' => $customer,
+                'sale'     => [
+                    'id'            => $sale->id,
+                    'buyer_name'    => $customer->name,
+                    'buyer_phone'   => $customer->phone,
+                    'buyer_address' => $customer->address,
+                    'model'         => $phone->model,
+                    'imei'          => $phone->imei,
+                    'storage'       => $phone->storage,
+                    'color'         => $phone->color,
+                    'price'         => $sale->total_amount,
+                    'discount'      => $sale->discount_amount,
+                    'total'         => $sale->total_amount - $sale->discount_amount,
+                    'created_at'    => $sale->created_at->format('Y-m-d H:i:s'),
+                ],
+                // We keep these for debugging or other uses if needed, 
+                // but the MAIN 'sale' object above is what InvoicePage uses.
+                'raw_sale'     => $sale,
+                'raw_customer' => $customer,
             ]);
         });
     }

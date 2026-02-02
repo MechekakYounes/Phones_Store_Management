@@ -21,9 +21,10 @@ class InvoicePage extends StatelessWidget {
     final String storage = (sale["storage"] ?? "").toString();
     final String color = (sale["color"] ?? "").toString();
 
-    final double price = (sale["price"] ?? 0).toDouble();
-    final double discount = (sale["discount"] ?? 0).toDouble();
-    final double total = (sale["total"] ?? 0).toDouble();
+    final double price = double.parse((sale["price"] ?? 0));
+    final double discount = double.parse((sale["discount"] ?? 0));
+    final String total = (sale["total"] ?? (price - discount)).toString();
+
 
     final String createdAt = (sale["created_at"] ?? "").toString();
 
@@ -152,8 +153,8 @@ class InvoicePage extends StatelessWidget {
                 ),
                 child: pw.Column(
                   children: [
-                    _priceRow("Price", price),
-                    _priceRow("Discount", discount),
+                    _priceRow("Price", price.toDouble()),
+                    _priceRow("Discount", discount.toDouble()),
                     pw.Divider(thickness: 1),
                     pw.Row(
                       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -166,7 +167,7 @@ class InvoicePage extends StatelessWidget {
                           ),
                         ),
                         pw.Text(
-                          "\$${total.toStringAsFixed(2)}",
+                          "\$${total.toString()}",
                           style: pw.TextStyle(
                             fontWeight: pw.FontWeight.bold,
                             fontSize: 16,

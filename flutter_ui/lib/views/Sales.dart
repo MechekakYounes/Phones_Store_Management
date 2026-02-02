@@ -25,6 +25,23 @@ class _SalePageState extends State<SalePage> {
   final discountController = TextEditingController(text: "0");
   double discount = 0;
 
+  Future<void> _loadProduct(int id) async {
+  try {
+    final response = await ApiService().getBuyPhoneById(id);
+
+    if (!mounted) return;
+    setState(() {
+      product = response['data'];
+      isLoading = false;
+    });
+  } catch (e) {
+    if (!mounted) return;
+    setState(() => isLoading = false);
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(e.toString())));
+  }
+}
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -35,27 +52,16 @@ class _SalePageState extends State<SalePage> {
     }
   }
 
-  Future<void> _loadProduct(int id) async {
-    try {
-      final response = await ApiService().getBuyPhoneById(id);
-      setState(() {
-        product = response['data'];
-        isLoading = false;
-      });
-    } catch (e) {
-      setState(() => isLoading = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
-    }
-  }
 
   @override
   void initState() {
     super.initState();
     discountController.addListener(() {
       final parsed = double.tryParse(discountController.text) ?? 0;
+      if (!mounted) return;
       setState(() => discount = parsed);
     });
+
   }
 
   @override
