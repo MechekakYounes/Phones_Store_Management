@@ -36,6 +36,9 @@ Route::middleware('auth:sanctum')->group(function () {
     
     //sale routes 
     Route::post('sales', [SaleController::class, 'store']);
+
+    //History routes
+    Route::get('history', [App\Http\Controllers\HistoryController::class, 'index']);
     
     // User management (super admin only)
     Route::middleware('super_admin')->group(function () {

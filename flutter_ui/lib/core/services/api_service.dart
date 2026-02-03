@@ -246,6 +246,14 @@ Future<Map<String, dynamic>> sellPhone(Map<String, dynamic> data) async {
 }
 
 
+Future<Map<String, dynamic>> getHistory() async {
+  final url = Uri.parse('${ApiConfig.baseUrl}/history');
+  final headers = ApiConfig.currentAuthHeaders();
+  final res = await _client.get(url, headers: headers).timeout(ApiConfig.timeout);
+  return _handleResponse(res);
+}
+
+
 
 }
 

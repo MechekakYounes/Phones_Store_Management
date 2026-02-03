@@ -83,6 +83,10 @@ class Sale extends Model
     {
         return $this->hasMany(Exchange::class);
     }
+    public function items()
+    {
+        return $this->hasMany(SaleItem::class); // or SaleDetail depending on your table name
+    }
 
     /**
      * Recalculate totals from sale items.
