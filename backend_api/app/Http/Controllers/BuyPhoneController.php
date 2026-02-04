@@ -104,15 +104,15 @@ class BuyPhoneController extends Controller
                 'buy_price'     => 'required|numeric|min:0',
                 'resell_price'  => 'nullable|numeric|min:0',
                 'received_date' => 'nullable|date',
-                'received_by'   => 'nullable|exists:users,id',
+                'created_by'   => 'nullable|exists:users,id',
                 'status'        => 'nullable|string',
                 'notes'         => 'nullable|string',
                 'issues'        => 'nullable|string',
             ]);
 
-            // Set received_by to authenticated user if not provided
-            if (!isset($validated['received_by']) && auth()->check()) {
-                $validated['received_by'] = auth()->id();
+            // Set created_by to authenticated user if not provided
+            if (!isset($validated['created_by']) && auth()->check()) {
+                $validated['created_by'] = auth()->id();
             }
 
             // Set received_date to current date if not provided
@@ -253,6 +253,19 @@ class BuyPhoneController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Phone deleted successfully'
+        ]);
+    }
+
+    public function get_available_phones()
+    {
+        $phones = BuyPhone::with('brand')
+                          ->where('status', '!=', BuyPhone::STATUS_SOLD)
+                          ->orWhereNull('status')
+                          ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $phones
         ]);
     }
 }

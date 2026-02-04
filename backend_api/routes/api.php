@@ -5,6 +5,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\BuyPhoneController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\ExchangesController;
+use App\Http\Controllers\BrandController;
 
 
 
@@ -23,6 +25,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // BuyPhone routes
     Route::get('buy-phones', [BuyPhoneController::class, 'index']);
+    Route::get('buy-phones/available', [BuyPhoneController::class, 'get_available_phones']);
     Route::get('buy-phones/{id}', [BuyPhoneController::class, 'show']);
     Route::post('buy-phones', [BuyPhoneController::class, 'store']);
     Route::put('buy-phones/{id}', [BuyPhoneController::class, 'update']);
@@ -33,6 +36,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('buy-phones/{id}/mark-sold', [BuyPhoneController::class, 'markSold']);
     Route::post('buy-phones/{id}/mark-returned', [BuyPhoneController::class, 'markReturned']);
     Route::get('buy-phones-stats', [BuyPhoneController::class, 'stats']);
+
+    //Exchanges routes 
+    Route::get('exchanges', [App\Http\Controllers\ExchangesController::class, 'index']);
+    Route::post('exchanges', [App\Http\Controllers\ExchangesController::class, 'store']);       
+    Route::get('exchanges/{id}', [App\Http\Controllers\ExchangesController::class, 'show']);
+    Route::post('/exchanges/{id}/complete', [ExchangesController::class, 'complete']);
+    Route::post('/exchanges/{id}/cancel', [ExchangesController::class, 'cancel']);
+    Route::delete('/exchanges/{id}', [ExchangesController::class, 'destroy']);
+
+    // Brand routes
+    Route::get('brands', [BrandController::class, 'index']);
+    Route::get('brands/names', [BrandController::class, 'get_brands_names']);
+    Route::get('brands/statistics', [BrandController::class, 'statistics']);
+
+
     
     //sale routes 
     Route::post('sales', [SaleController::class, 'store']);

@@ -30,6 +30,22 @@ class Customer extends Model
     {
         return $this->hasMany(Sale::class);
     }
+    /**
+     * Get the exchanges for the customer.
+     */
+    public function exchanges(): HasMany
+    {
+        return $this->hasMany(Exchange::class);
+    }
+    /**
+     * Get the buy phones for the customer.
+     */
+        public function buy_phones(): HasMany
+    {
+        return $this->hasMany(BuyPhone::class);
+    }
+
+
 
     /**
      * Get the repairs for the customer.
@@ -37,14 +53,6 @@ class Customer extends Model
     public function repairs(): HasMany
     {
         return $this->hasMany(Repair::class);
-    }
-
-    /**
-     * Get the exchanges for the customer.
-     */
-    public function exchanges(): HasMany
-    {
-        return $this->hasMany(Exchange::class);
     }
 
     /**

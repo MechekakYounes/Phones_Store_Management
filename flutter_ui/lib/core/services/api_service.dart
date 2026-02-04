@@ -163,6 +163,27 @@ class ApiService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getAvailableBuyPhones() async {
+  try {
+    final url = Uri.parse('${ApiConfig.baseUrl}/buy-phones/available');
+    final headers = ApiConfig.currentAuthHeaders();
+
+    final response = await _client.get(url, headers: headers).timeout(ApiConfig.timeout);
+    final res = _handleResponse(response);
+
+    // Convert the "data" field (which is a List) to List<Map<String, dynamic>>
+    return List<Map<String, dynamic>>.from(res['data']);
+  } catch (e) {
+    if (e is ApiException) rethrow;
+    if (e.toString().contains('not authenticated') || 
+        e.toString().contains('User not authenticated')) {
+      throw ApiException(message: 'Session expired. Please login again.', statusCode: 401);
+    }
+    throw ApiException(message: 'Network error: $e');
+  }
+}
+  
+
   /// Add a new phone purchase entry
   Future<Map<String, dynamic>> addBuyPhone({
     required Map<String, dynamic> productdata,
@@ -253,6 +274,47 @@ Future<Map<String, dynamic>> getHistory() async {
   return _handleResponse(res);
 }
 
+Future<Map<String, dynamic>> getExchanges() async {
+  final url = Uri.parse('${ApiConfig.baseUrl}/exchanges');
+  final headers = ApiConfig.currentAuthHeaders();
+  final res = await _client.get(url, headers: headers).timeout(ApiConfig.timeout);
+  return _handleResponse(res);
+}
+Future<Map<String, dynamic>> createExchange(Map<String, dynamic> data) async {
+  final url = Uri.parse('${ApiConfig.baseUrl}/exchanges');
+
+  final response = await _client.post(
+    url,
+    headers: ApiConfig.currentAuthHeaders(),
+    body: json.encode(data),
+  ).timeout(ApiConfig.timeout);
+
+  return _handleResponse(response);
+}
+
+
+  Future<List<String>> getBrands() async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/brands/names');
+    final headers = ApiConfig.currentAuthHeaders();
+    final response = await http.get(url, headers: headers);
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> jsonResponse = json.decode(response.body);
+      // Extract the 'data' array and cast it to List<String>
+      List<String> brands = List<String>.from(jsonResponse['data'] ?? []);
+      return brands;
+    } else {
+      throw Exception('Failed to load brands');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getBrandsList() async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/brands');
+    final headers = ApiConfig.currentAuthHeaders();
+    final response = await http.get(url, headers: headers);
+    
+    final res = _handleResponse(response);
+    return List<Map<String, dynamic>>.from(res['data']);
+  }
 
 
 }

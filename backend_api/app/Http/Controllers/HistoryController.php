@@ -10,7 +10,7 @@ class HistoryController extends Controller
     public function index()
     {
         // SALES
-        $sales = Sale::with(['customer', 'creator', 'items.product'])
+        $sales = Sale::with(['customer', 'creator', 'buy_phones'])
             ->latest()
             ->get()
             ->map(function ($s) {
@@ -18,8 +18,10 @@ class HistoryController extends Controller
 
                 return [
                     'type' => 'sale',
-                    'title' => 'Sold ' . ($firstItem?->product?->model ?? 'Phone'),
-                    'subtitle' => 'To ' . ($s->customer?->name ?? 'Unknown'),
+                    'title' => '' . ($s->buy_phones?->model ?? 'Phone'),
+                    'subtitle' => 'To ' . ($s->customer?->name ?? 'Unknown') .
+                                  ' • IMEI: ' . ($s->phone?->imei ?? 'N/A') .
+                                  ' • By: ' . ($s->creator?->name ?? 'System'),
                     'amount' => $s->total_amount ?? 0,
                     'created_at' => $s->created_at,
                 ];
@@ -32,8 +34,10 @@ class HistoryController extends Controller
             ->map(function ($b) {
                 return [
                     'type' => 'add',
-                    'title' => 'Added ' . ($b->brand?->name ?? 'Brand') . ' ' . $b->model,
-                    'subtitle' => 'From ' . ($b->seller_name ?? 'Unknown'),
+                    'title' => '' . ($b->brand?->name ?? 'Brand') . ' ' . $b->model,
+                    'subtitle' => 'From ' . ($b->seller_name ?? 'Unknown') . 
+                                  ' • IMEI: ' . ($b->imei ?? 'N/A') .
+                                  ' • By: ' . ($b->created_by ? $b->creator->name : 'System'),
                     'amount' => $b->buy_price ?? 0,
                     'created_at' => $b->created_at,
                 ];

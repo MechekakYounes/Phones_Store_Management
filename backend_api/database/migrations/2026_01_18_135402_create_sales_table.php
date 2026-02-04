@@ -12,6 +12,7 @@ return new class extends Migration
         Schema::create('sales', function (Blueprint $table) {
             $table->id();
             $table->foreignId('customer_id')->nullable()->constrained()->onDelete('set null');
+            $table->foreignId('buy_phone_id')->nullable()->constrained('buy_phones')->onDelete('set null');
             $table->decimal('total_amount', 12, 2)->default(0);
             $table->decimal('discount_amount', 10, 2)->default(0);
             $table->decimal('grand_total', 12, 2)->storedAs('total_amount - discount_amount');

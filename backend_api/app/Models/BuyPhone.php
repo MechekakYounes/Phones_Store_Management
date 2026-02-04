@@ -35,6 +35,7 @@ class BuyPhone extends Model
         'sold_date',
         'received_by',
         'sold_to',
+        'created_by',
     ];
 
     /**
@@ -141,6 +142,11 @@ class BuyPhone extends Model
     public function buyer(): BelongsTo
     {
         return $this->belongsTo(Customer::class, 'sold_to');
+    }
+    
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     /**

@@ -1,12 +1,11 @@
 <?php
-// app/Http\Controllers\Api\BrandController.php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers;
 
 use App\Models\Brand;
 use Illuminate\Http\Request;
 
-class BrandController extends BaseController
+class BrandController extends Controller
 {
     public function __construct()
     {
@@ -36,6 +35,26 @@ class BrandController extends BaseController
                 'brands_with_products' => $brandsWithProducts,
                 'top_brands' => $topBrands,
             ]
+        ]);
+    }
+
+    public function index()
+    {
+        $brands = Brand::withCount('products')->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $brands,
+        ]);
+    }
+
+    public function get_brands_names()
+    {
+        $brands = Brand::pluck('name');
+
+        return response()->json([
+            'success' => true,
+            'data' => $brands,
         ]);
     }
 }

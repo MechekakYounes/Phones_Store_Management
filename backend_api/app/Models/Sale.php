@@ -19,6 +19,7 @@ class Sale extends Model
      */
     protected $fillable = [
         'customer_id',
+        'buy_phone_id',
         'total_amount',
         'discount_amount',
         'grand_total',
@@ -74,6 +75,11 @@ class Sale extends Model
     public function saleItems(): HasMany
     {
         return $this->hasMany(SaleItem::class);
+    }
+
+    public function buy_phones(): BelongsTo
+    {
+        return $this->belongsTo(BuyPhone::class,'buy_phone_id');
     }
 
     /**

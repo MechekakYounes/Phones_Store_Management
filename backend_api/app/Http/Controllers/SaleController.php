@@ -59,6 +59,7 @@ class SaleController extends Controller
             // 2️⃣ Create Sale
             $sale = Sale::create([
                 'customer_id'     => $customer->id,
+                'buy_phone_id'    => $request->buy_phone_id,
                 'total_amount'    => $request->total_amount,
                 'discount_amount' => $request->discount_amount ?? 0,
                 'payment_status'  => 'paid',

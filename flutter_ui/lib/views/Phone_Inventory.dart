@@ -607,6 +607,7 @@ class _AddProductPageState extends State<AddProductPage> {
         "received_by": auth.user!['id'],
         "notes": notesController.text.trim().isEmpty ? null : notesController.text.trim(),
         "issues": issuesController.text.trim().isEmpty ? null : issuesController.text.trim(),
+        "created_by": auth.user!['id'],
       };
 
       // Call API

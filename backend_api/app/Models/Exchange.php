@@ -24,7 +24,6 @@ class Exchange extends Model
         'difference_amount',
         'reason',
         'status',
-        'exchange_number',
         'exchange_date',
         'processed_by',
     ];
@@ -46,54 +45,7 @@ class Exchange extends Model
     const STATUS_COMPLETED = 'completed';
     const STATUS_CANCELLED = 'cancelled';
 
-    /**
-     * Boot the model.
-     */
-    protected static function boot()
-    {
-        parent::boot();
 
-        static::creating(function ($exchange) {
-            // Generate exchange number if not provided
-            if (!$exchange->exchange_number) {
-                $exchange->exchange_number = 'EXC-' . date('Ymd') . '-' . str_pad(Exchange::count() + 1, 4, '0', STR_PAD_LEFT);
-            }
-
-            // Set exchange date if not provided
-            if (!$exchange->exchange_date) {
-                $exchange->exchange_date = now()->toDateString();
-            }
-
-            //_______ Set processed_by to current user if not provided
-            if (!$exchange->processed_by && auth()->check()) {
-                $exchange->processed_by = auth()->id();
-            }
-
-        });
-
-        static::created(function ($exchange) {
-            // Update buy_phone status when exchange is created
-            $exchange->updateBuyPhoneStatus();
-        });
-
-        static::updated(function ($exchange) {
-            // Handle status changes
-            if ($exchange->isDirty('status')) {
-                if ($exchange->status === self::STATUS_COMPLETED) {
-                    $exchange->processExchange();
-                } elseif ($exchange->getOriginal('status') === self::STATUS_COMPLETED) {
-                    $exchange->reverseExchange();
-                }
-            }
-        });
-
-        static::deleting(function ($exchange) {
-            // Restore buy_phone status when exchange is deleted
-            if ($exchange->status === self::STATUS_PENDING) {
-                $exchange->restoreBuyPhoneStatus();
-            }
-        });
-    }
 
     /**
      * Get the sale associated with the exchange.
