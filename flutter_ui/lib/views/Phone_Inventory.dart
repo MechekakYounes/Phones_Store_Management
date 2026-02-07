@@ -388,6 +388,16 @@ class InventoryCard extends StatelessWidget {
                     "Storage: ${product["storage"]}",
                     style: const TextStyle(color: Colors.grey, fontSize: 12),
                   ),
+                if ((product["issues"] ?? "").toString().isNotEmpty)
+                  Text(
+                    "Issues: ${product["issues"]}",
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
+                if ((product["notes"] ?? "").toString().isNotEmpty)
+                  Text(
+                    "Notes: ${product["notes"]}",
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
                 if (status.isNotEmpty)
                   Text(
                     "Status: ${status.toUpperCase()}",
@@ -494,19 +504,9 @@ class _AddProductPageState extends State<AddProductPage> {
 
   bool loading = false;
 
-  // Local brand list (can later be loaded from API)
-  final brandsList = [
-    'Apple',
-    'Samsung',
-    'Xiaomi',
-    'Huawei',
-    'Oppo',
-    'Realme',
-    'Google',
-    'Nokia',
-    'LG',
-    'Bosch',
-  ];
+  // Fetch brands from database
+  final Future<List<Map<String, dynamic>>> brands = ApiService().getBrandsList();
+  int? selectedBrandId;
 
   bool get isPhone => category == ProductCategory.phone;
   bool get isSupplier => source == AddSource.supplier;
@@ -549,8 +549,7 @@ class _AddProductPageState extends State<AddProductPage> {
     if (!formKey.currentState!.validate()) return;
 
     // Check brand selection
-    final brandIndex = brandsList.indexOf(brand.text);
-    if (brandIndex == -1) {
+    if (selectedBrandId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please select a valid brand")),
       );
@@ -595,7 +594,7 @@ class _AddProductPageState extends State<AddProductPage> {
             : personPhone.text.trim(),
           
 
-        "brand_id": brandIndex + 1, // must match DB id
+        "brand_id": selectedBrandId, // from database
         "model": model.text.trim(),
         "color": color.text.trim(),
         "storage": storage.text.trim(),
@@ -800,16 +799,36 @@ class _AddProductPageState extends State<AddProductPage> {
                     v == null || v.trim().isEmpty ? "Model is required" : null,
               ),
 
-              // Brand selection (required)
-              DropdownButtonFormField(
-                decoration: _decoration("Brand"),
-                items: brandsList
-                    .map((b) => DropdownMenuItem(value: b, child: Text(b)))
-                    .toList(),
-                onChanged: (v) {
-                  if (v != null) brand.text = v;
+              // Brand selection (required) - fetched from database
+              FutureBuilder<List<Map<String, dynamic>>>(
+                future: brands,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const CircularProgressIndicator();
+                  } else if (snapshot.hasError) {
+                    return Text("Error: ${snapshot.error}");
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Text("No brands available");
+                  } else {
+                    return DropdownButtonFormField<int>(
+                      decoration: _decoration("Brand"),
+                      items: snapshot.data!
+                          .map((b) => DropdownMenuItem(
+                              value: b['id'] as int,
+                              child: Text(b['name'].toString())))
+                          .toList(),
+                      onChanged: (v) {
+                        setState(() {
+                          selectedBrandId = v;
+                          // Update text controller for backward compatibility
+                          brand.text = snapshot.data!
+                              .firstWhere((element) => element['id'] == v)['name'];
+                        });
+                      },
+                      validator: (v) => v == null ? "Brand is required" : null,
+                    );
+                  }
                 },
-                validator: (v) => v == null ? "Brand is required" : null,
               ),
 
               const SizedBox(height: 20),

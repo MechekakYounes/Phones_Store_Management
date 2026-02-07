@@ -1,4 +1,6 @@
 import 'dart:typed_data';
+import 'dart:io';
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -44,7 +46,7 @@ class InvoicePage extends StatelessWidget {
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
                       pw.Text(
-                        "Phone Store",
+                        "Rabah Phone",
                         style: pw.TextStyle(
                           fontSize: 26,
                           fontWeight: pw.FontWeight.bold,
@@ -263,18 +265,41 @@ class InvoicePage extends StatelessWidget {
             },
           ),
           IconButton(
-            tooltip: "Download",
-            icon: const Icon(Icons.download),
-            onPressed: () async {
-              final pdfBytes = await _buildPdf(PdfPageFormat.a4);
+  tooltip: "Download",
+  icon: const Icon(Icons.download),
+  onPressed: () async {
+    try {
+      final pdfBytes = await _buildPdf(PdfPageFormat.a4);
 
-              await Printing.sharePdf(
-                bytes: pdfBytes,
-                filename:
-                    "invoice_${DateTime.now().millisecondsSinceEpoch}.pdf",
-              );
-            },
-          ),
+      final fileName =
+          "buy_${sale['buyer_name']}.pdf";
+
+      final FileSaveLocation? location = await getSaveLocation(
+        suggestedName: fileName,
+        acceptedTypeGroups: const [
+          XTypeGroup(label: 'PDF', extensions: ['pdf']),
+        ],
+      );
+
+      if (location == null) {
+        // User canceled dialog
+        return;
+      }
+
+      final file = File(location.path);
+      await file.writeAsBytes(pdfBytes);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("PDF saved successfully")),
+      );
+    } catch (e) {
+      print("Save error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to save PDF: $e")),
+      );
+    }
+  },
+),
         ],
       ),
 
@@ -292,7 +317,7 @@ class InvoicePage extends StatelessWidget {
         canDebug: false,
 
         // Optional filename if the widget ever uses it
-        pdfFileName: "invoice_${DateTime.now().millisecondsSinceEpoch}.pdf",
+        pdfFileName: "invoice_${sale['buyer_name']}.pdf",
       ),
     );
   }

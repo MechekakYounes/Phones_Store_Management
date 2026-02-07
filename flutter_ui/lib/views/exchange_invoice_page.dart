@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'dart:io';
+import 'package:file_selector/file_selector.dart';
+
 
 class ExchangeInvoicePage extends StatelessWidget {
   final Map<String, dynamic> exchange;
@@ -316,18 +319,41 @@ class ExchangeInvoicePage extends StatelessWidget {
             },
           ),
           IconButton(
-            tooltip: "Download",
-            icon: const Icon(Icons.download),
-            onPressed: () async {
-              final pdfBytes = await _buildPdf(PdfPageFormat.a4);
+  tooltip: "Download",
+  icon: const Icon(Icons.download),
+  onPressed: () async {
+    try {
+      final pdfBytes = await _buildPdf(PdfPageFormat.a4);
 
-              await Printing.sharePdf(
-                bytes: pdfBytes,
-                filename:
-                    "exchange_invoice_${DateTime.now().millisecondsSinceEpoch}.pdf",
-              );
-            },
-          ),
+      final fileName =
+          "exchange_${exchange['customer_name']}.pdf";
+
+      final FileSaveLocation? location = await getSaveLocation(
+        suggestedName: fileName,
+        acceptedTypeGroups: const [
+          XTypeGroup(label: 'PDF', extensions: ['pdf']),
+        ],
+      );
+
+      if (location == null) {
+        // User canceled dialog
+        return;
+      }
+
+      final file = File(location.path);
+      await file.writeAsBytes(pdfBytes);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("PDF saved successfully")),
+      );
+    } catch (e) {
+      print("Save error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to save PDF: $e")),
+      );
+    }
+  },
+),
         ],
       ),
       body: PdfPreview(
