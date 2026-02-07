@@ -21,7 +21,8 @@ class HistoryController extends Controller
                     'title' => '' . ($s->buy_phones?->model ?? 'Phone'),
                     'subtitle' => 'To ' . ($s->customer?->name ?? 'Unknown') .
                                   ' • IMEI: ' . ($s->phone?->imei ?? 'N/A') .
-                                  ' • By: ' . ($s->creator?->name ?? 'System'),
+                                  ' • By: ' . ($s->creator?->name ?? 'System') .
+                                  ' • price: ' . ($s->total_amount ?? 0) . 'DA',
                     'amount' => $s->total_amount ?? 0,
                     'created_at' => $s->created_at,
                 ];

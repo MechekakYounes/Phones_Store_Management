@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ui/diags/logout_diag.dart';
 import 'package:flutter_ui/core/services/auth_service.dart';
+import 'package:flutter_ui/core/services/dashboard_service.dart';
 import 'package:flutter_ui/views/Login.dart';
 
 /// DashboardPage:
@@ -17,9 +18,45 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   /// Selected index for navigation (Mobile bottom nav / Desktop rail)
   int selectedIndex = 0;
-  final List<Map<String, dynamic>> localHistory = [];
-  void addHistory(Map<String, dynamic> item) {
-    localHistory.insert(0, item); // newest first
+  
+  /// Dashboard data
+  bool _isLoading = true;
+  String? _errorMessage;
+  Map<String, dynamic>? _dashboardData;
+  final DashboardService _dashboardService = DashboardService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboardData();
+  }
+
+  /// Load dashboard data from API
+  Future<void> _loadDashboardData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final response = await _dashboardService.getStatistics();
+      if (response['success'] == true) {
+        setState(() {
+          _dashboardData = response['data'];
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage = response['message'] ?? 'Failed to load dashboard';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error loading dashboard: $e';
+        _isLoading = false;
+      });
+    }
   }
 
   /// Navigate based on selected index
@@ -61,8 +98,8 @@ class _DashboardPageState extends State<DashboardPage> {
     return Scaffold(
       appBar: AppBar(
         title: Row(
-          children: const [
-            Icon(Icons.phone_android),
+          children: [
+            Image.asset('logo.png', width: 80, height: 80,scale:0.25),
             SizedBox(width: 10),
             Text("Rabah Phone Store"),
           ],
@@ -143,14 +180,34 @@ class _DashboardPageState extends State<DashboardPage> {
 
           /// Dashboard content
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                _header(),
-                const SizedBox(height: 20),
-                _statsRow(),
-                const SizedBox(height: 24),
-                _salesOverview(),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMessage != null
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              _errorMessage!,
+                              style: const TextStyle(color: Colors.red),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: _loadDashboardData,
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView(
+                        padding: const EdgeInsets.all(16),
+                        children: [
+                          _header(),
+                          const SizedBox(height: 20),
+                          _statsRow(),
+                          const SizedBox(height: 24),
+                          _salesOverview(),
                 const SizedBox(height: 24),
                 _recentTransactions(),
               ],
@@ -186,22 +243,29 @@ class _DashboardPageState extends State<DashboardPage> {
 
   /// Small stat cards section
   Widget _statsRow() {
+    final todaySales = _dashboardData?['today_sales'] ?? {};
+    final totalProfit = _dashboardData?['total_profit'] ?? {};
+    
+    final salesAmount = todaySales['amount'] ?? 0.0;
+    final salesChange = todaySales['change_percent'] ?? 0.0;
+    final profitAmount = totalProfit['amount'] ?? 0.0;
+    
     return Row(
-      children: const [
+      children: [
         Expanded(
           child: _StatCard(
             title: "Today's Sales",
-            value: "\$1,240.00",
+            value: "\$${salesAmount.toStringAsFixed(2)}",
             icon: Icons.attach_money,
-            badge: "+12%",
-            badgeColor: Colors.green,
+            badge: "${salesChange >= 0 ? '+' : ''}${salesChange.toStringAsFixed(1)}%",
+            badgeColor: salesChange >= 0 ? Colors.green : Colors.red,
           ),
         ),
-        SizedBox(width: 16),
+        const SizedBox(width: 16),
         Expanded(
           child: _StatCard(
             title: "Total Profit",
-            value: "+\$450.00",
+            value: "${profitAmount >= 0 ? '+' : ''}\$${profitAmount.toStringAsFixed(2)}",
             icon: Icons.trending_up,
           ),
         ),
@@ -211,6 +275,10 @@ class _DashboardPageState extends State<DashboardPage> {
 
   /// Sales Overview section (with chart placeholder)
   Widget _salesOverview() {
+    final weeklySales = _dashboardData?['weekly_sales'] ?? {};
+    final weeklyAmount = weeklySales['amount'] ?? 0.0;
+    final weeklyChange = weeklySales['change_percent'] ?? 0.0;
+    
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -219,20 +287,23 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Text(
+        children: [
+          const Text(
             'Sales Overview',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Text(
-            '\$8,420',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+            '\$${weeklyAmount.toStringAsFixed(2)}',
+            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 6),
-          Text('↑ 12.5% from last week', style: TextStyle(color: Colors.green)),
-          SizedBox(height: 16),
-          SizedBox(
+          const SizedBox(height: 6),
+          Text(
+            '${weeklyChange >= 0 ? '↑' : '↓'} ${weeklyChange.abs().toStringAsFixed(1)}% from last week',
+            style: TextStyle(color: weeklyChange >= 0 ? Colors.green : Colors.red),
+          ),
+          const SizedBox(height: 16),
+          const SizedBox(
             height: 120,
             child: Center(
               child: Text(
@@ -248,7 +319,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   /// Recent Transactions list
   Widget _recentTransactions() {
-    final recent = localHistory.take(4).toList();
+    final recentTransactions = _dashboardData?['recent_transactions'] as List<dynamic>? ?? [];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -269,19 +340,21 @@ class _DashboardPageState extends State<DashboardPage> {
           ],
         ),
         const SizedBox(height: 12),
-        if (recent.isEmpty)
+        if (recentTransactions.isEmpty)
           const Text(
             "No transactions yet.",
             style: TextStyle(color: Colors.grey),
           )
         else
-          ...recent.map((h) {
+          ...recentTransactions.map((transaction) {
+            final title = transaction['title'] ?? 'Unknown';
+            final amount = transaction['amount'] ?? 0.0;
+            final createdAt = transaction['created_at'] ?? '';
+            
             return _TransactionTile(
-              (h["title"] ?? "Unknown").toString(),
-              h["amount"] != null ? "\$${h["amount"]}" : "",
-              (h["created_at"] is DateTime)
-                  ? (h["created_at"] as DateTime).toIso8601String()
-                  : "",
+              title,
+              "\$${amount.toStringAsFixed(2)}",
+              createdAt,
             );
           }).toList(),
       ],

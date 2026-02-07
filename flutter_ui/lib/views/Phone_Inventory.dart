@@ -481,8 +481,8 @@ class _AddProductPageState extends State<AddProductPage> {
   final TextEditingController buyPrice = TextEditingController();
   final TextEditingController sellPrice = TextEditingController();
   String conditionValue = "good"; // or from dropdown
-  TextEditingController notesController = TextEditingController();
-  TextEditingController issuesController = TextEditingController();
+  TextEditingController notes = TextEditingController();
+  TextEditingController issues= TextEditingController();
 
   // Extra customer fields when source is person
   final TextEditingController personName = TextEditingController();
@@ -605,8 +605,8 @@ class _AddProductPageState extends State<AddProductPage> {
         "received_date": DateTime.now().toIso8601String().split('T')[0], // Send only date part (YYYY-MM-DD)
         "resell_price": double.parse(sellPrice.text.trim()),
         "received_by": auth.user!['id'],
-        "notes": notesController.text.trim().isEmpty ? null : notesController.text.trim(),
-        "issues": issuesController.text.trim().isEmpty ? null : issuesController.text.trim(),
+        "notes": notes.text.trim().isEmpty ? null : notes.text.trim(),
+        "issues": issues.text.trim().isEmpty ? null : issues.text.trim(),
         "created_by": auth.user!['id'],
       };
 
@@ -863,6 +863,15 @@ class _AddProductPageState extends State<AddProductPage> {
                 _field(personAddress, "Address"),
                 const Divider(),
               ],
+                _field(
+                  notes,
+                  "notes",
+                ),
+                _field(
+                  issues,
+                  "Issues",
+                ),
+                
 
               // Buy/Sell prices
               _field(
@@ -954,8 +963,8 @@ class _AddProductPageState extends State<AddProductPage> {
     quantity.dispose();
     buyPrice.dispose();
     sellPrice.dispose();
-    notesController.dispose();
-    issuesController.dispose();
+    notes.dispose();
+    issues.dispose();
     personName.dispose();
     personPhone.dispose();
     personAddress.dispose();

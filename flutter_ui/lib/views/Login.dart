@@ -76,13 +76,13 @@ class LoginPage extends State<Login> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             // App icon (old UI)
-                            const Icon(
-                              Icons.store,
-                              size: 64,
-                              color: Colors.blue,
+                            Image.asset(
+                              'logo.png',
+                              width: 80,
+                              height: 80,
+                              scale:3,
                             ),
                             const SizedBox(height: 16),
-
                             // Title
                             const Text(
                               'Shop Manager',
@@ -95,7 +95,7 @@ class LoginPage extends State<Login> {
 
                             // Subtitle
                             const Text(
-                              'Log in to manage your inventory',
+                              'سجل دخولك',
                               style: TextStyle(color: Colors.grey),
                             ),
                             const SizedBox(height: 32),
