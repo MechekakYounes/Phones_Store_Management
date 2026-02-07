@@ -77,7 +77,7 @@ class LoginPage extends State<Login> {
                           children: [
                             // App icon (old UI)
                             Image.asset(
-                              'logo.png',
+                              'assets/logo.png',
                               width: 80,
                               height: 80,
                               scale:3,
