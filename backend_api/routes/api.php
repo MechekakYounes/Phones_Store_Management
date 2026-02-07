@@ -7,6 +7,7 @@ use App\Http\Controllers\BuyPhoneController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\ExchangesController;
 use App\Http\Controllers\BrandController;
+use App\Http\Controllers\DashboardController;
 
 
 
@@ -57,6 +58,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //History routes
     Route::get('history', [App\Http\Controllers\HistoryController::class, 'index']);
+
+    //Dashboard routes
+    Route::get('dashboard/statistics', [DashboardController::class, 'statistics']);
     
     // User management (super admin only)
     Route::middleware('super_admin')->group(function () {

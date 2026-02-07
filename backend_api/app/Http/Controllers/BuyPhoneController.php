@@ -92,14 +92,7 @@ class BuyPhoneController extends Controller
                 'model'         => 'required|string|max:255',
                 'color'         => 'nullable|string|max:100',
                 'storage'       => 'nullable|string|max:50',
-                'imei'          => [
-                                    Rule::requiredIf(fn () => $request->seller_name !== 'Supplier Company'),
-                                    'nullable',
-                                    'string',
-                                    'max:20',
-                                    'unique:buy_phones,imei',
-                                    Rule::unique('buy_phones', 'imei')->whereNotNull('imei')
-                                   ],
+                'imei'          => 'nullable|string|size:15',
                 'condition'     => 'required|string|in:excellent,very_good,good,fair,damaged,broken',
                 'buy_price'     => 'required|numeric|min:0',
                 'resell_price'  => 'nullable|numeric|min:0',
@@ -178,10 +171,7 @@ class BuyPhoneController extends Controller
             'model'         => 'sometimes|required|string|max:255',
             'color'         => 'nullable|string|max:100',
             'storage'       => 'nullable|string|max:50',
-            'imei'          => [
-                'sometimes','required','string','size:15',
-                Rule::unique('buy_phones','imei')->ignore($phone->id)
-            ],
+            'imei'          => 'nullable|string|size:15',
             'condition'     => 'sometimes|required',
             'buy_price'     => 'sometimes|required|numeric|min:0',
             'resell_price'  => 'nullable|numeric|min:0',

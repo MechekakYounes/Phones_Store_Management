@@ -23,14 +23,18 @@ class ExchangeInvoicePage extends StatelessWidget {
         (exchange["outgoing_phone"] ?? {}) as Map<String, dynamic>;
 
     final String createdAt = (exchange["created_at"] ?? "").toString();
+    double _parseDouble(dynamic value) {
+         if (value == null) return 0.0;
+  if (value is int) return value.toDouble();
+  if (value is double) return value;
+  if (value is String) return double.tryParse(value) ?? 0.0;
+  return 0.0;
+}
 
-    final double outgoingPrice =
-        (outgoingPhone["selling_price"] ?? 0).toDouble();
-    final double incomingPrice =
-        (incomingPhone["selling_price"] ?? 0).toDouble();
 
+    final double outgoingPrice = _parseDouble(outgoingPhone["selling_price"]);
+    final double incomingPrice = _parseDouble(incomingPhone["selling_price"]);
     final double difference = outgoingPrice - incomingPrice;
-
     pdf.addPage(
       pw.Page(
         pageFormat: format,
