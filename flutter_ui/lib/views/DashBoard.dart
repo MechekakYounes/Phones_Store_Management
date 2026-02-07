@@ -99,7 +99,7 @@ class _DashboardPageState extends State<DashboardPage> {
       appBar: AppBar(
         title: Row(
           children: [
-            Image.asset('logo.png', width: 80, height: 80,scale:0.25),
+            Image.asset('assets/logo.png', width: 80, height: 80, scale: 0.25),
             SizedBox(width: 10),
             Text("Rabah Phone Store"),
           ],
