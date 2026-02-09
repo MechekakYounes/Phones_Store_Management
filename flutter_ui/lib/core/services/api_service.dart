@@ -266,6 +266,18 @@ Future<Map<String, dynamic>> sellPhone(Map<String, dynamic> data) async {
   }
 }
 
+Future<Map<String, dynamic>> updateSellPrice(int id, double newPrice) async {
+  final url = Uri.parse('${ApiConfig.baseUrl}/buy-phones/$id/update-sell-price');
+
+  final response = await _client.post(
+    url,
+    headers: ApiConfig.currentAuthHeaders(),
+    body: json.encode({'resell_price': newPrice}),
+  ).timeout(ApiConfig.timeout);
+
+  return _handleResponse(response);
+}
+
 
 Future<Map<String, dynamic>> getHistory() async {
   final url = Uri.parse('${ApiConfig.baseUrl}/history');

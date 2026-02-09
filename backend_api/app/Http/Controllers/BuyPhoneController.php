@@ -188,6 +188,23 @@ class BuyPhoneController extends Controller
             'data' => $phone
         ]);
     }
+    public function updateSellPrice (Request $request, $id)
+    {
+        $phone = BuyPhone::findOrFail($id);
+
+        $validated = $request->validate([
+            'resell_price' => 'required|numeric|min:0',
+        ]);
+
+        $phone->resell_price = $validated['resell_price'];
+        $phone->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Resell price updated successfully',
+            'data' => $phone
+        ]);
+    }
     // POST /api/buy-phones/{id}/sell
     public function sell(Request $request, $id)
 {

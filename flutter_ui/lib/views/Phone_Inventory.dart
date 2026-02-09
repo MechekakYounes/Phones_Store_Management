@@ -60,17 +60,12 @@ class InventoryPage extends StatefulWidget {
 class _InventoryPageState extends State<InventoryPage> {
   // API-fetched inventory list
   List<Map<String, dynamic>> inventory = [];
-  
   // Loading and error states
   bool isLoading = false;
   String? errorMessage;
-
   // Search input controller and current query
   final TextEditingController searchController = TextEditingController();
   String searchQuery = "";
-  
-  // Debounce timer for search
-  DateTime? _lastSearchTime;
 
   @override
   void initState() {
@@ -84,8 +79,6 @@ class _InventoryPageState extends State<InventoryPage> {
     searchController.dispose();
     super.dispose();
   }
-
-
 
   /// Load inventory from API
   Future<void> _loadInventory() async {
@@ -127,11 +120,12 @@ class _InventoryPageState extends State<InventoryPage> {
       });
     }
   }
-
+  
   /*
     filteredInventory:
     Returns the list of products that match the search query.
-    For now, we do client-side filtering, but the API also supports search.
+     - If searchQuery is empty, returns the full inventory.
+     - Otherwise, filters by model, IMEI, storage, color, or seller name.
   */
   List<Map<String, dynamic>> get filteredInventory {
     if (searchQuery.trim().isEmpty) return inventory;
@@ -161,6 +155,8 @@ class _InventoryPageState extends State<InventoryPage> {
          _loadInventory(); //reload after invoice is closed
       }  
   }
+
+
 
   /*
     Opens the AddProductPage and refreshes inventory after adding.
@@ -306,6 +302,30 @@ class InventoryCard extends StatelessWidget {
 
   const InventoryCard({super.key, required this.product, required this.onSell});
 
+  Future<void> _updateSellPrice(int productId, double newPrice) async {
+    try {
+      final response = await ApiService().updateSellPrice(
+        productId,
+         newPrice,
+      );
+
+      if (response['success'] == true) {
+        // Optionally show a success message or refresh the inventory
+        ScaffoldMessenger.of(onSell as BuildContext).showSnackBar(
+          const SnackBar(content: Text("Sell price updated successfully!")),
+        );
+      } else {
+        throw Exception(response['message'] ?? "Failed to update sell price");
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(onSell as BuildContext).showSnackBar(
+        SnackBar(content: Text("Failed to update price: ${e.toString().replaceAll('Exception: ', '')}")),
+      );
+    }
+  }
+
+  
+
 
   @override
   Widget build(BuildContext context) {
@@ -417,8 +437,58 @@ class InventoryCard extends StatelessWidget {
                 onPressed: onSell,
                 child: const Text("Sell"),
               ),
+              ElevatedButton(
+                onPressed: (){
+                  //simple dialog to input new price, then call _updateSellPrice
+                  showDialog(
+                    context: context,
+                    builder: (context) {
+                      final TextEditingController priceController = TextEditingController(text: price.toStringAsFixed(2));
+                      return AlertDialog(
+                        title: const Text("Update Sell Price"),
+                        content: TextField(
+                          controller: priceController,
+                          keyboardType: TextInputType.numberWithOptions(decimal: true),
+                          decoration: const InputDecoration(
+                            labelText: "New Sell Price",
+                            prefixText: "\$",
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text("Cancel"),
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              final newPrice = double.tryParse(priceController.text.trim());
+                              if (newPrice != null && newPrice > 0) {
+                                _updateSellPrice(product["id"], newPrice);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("Updating price...")),
+                                );
+                               _InventoryPageState()._loadInventory(); // Refresh inventory to show updated price
+                                Navigator.pop(context);
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("Please enter a valid price")),
+                                );
+                              }
+  
+                            },
+                            child: const Text("Update"),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                child: const Text("Update Price"),
+              ),
+
             ],
           ),
+          
         ],
       ),
     );
@@ -655,6 +725,7 @@ class _AddProductPageState extends State<AddProductPage> {
       if (mounted) setState(() => loading = false);
     }
   }
+
 
 
 
