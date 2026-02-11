@@ -287,18 +287,6 @@ Future<void> _loadInventoryFromApi() async {
     );
   }
 
-  // ==========================================================
-  // CONFIRM EXCHANGE (LOCAL)
-  // ==========================================================
-  /// Confirms the exchange locally.
-  /// Validation rules:
-  /// - Form must be valid
-  /// - User must select a phone from inventory
-  ///
-  /// API integration later:
-  /// - POST /exchanges
-  /// - Update inventory quantities
- 
 
   @override
   Widget build(BuildContext context) {

@@ -565,18 +565,9 @@ class _AddProductPageState extends State<AddProductPage> {
   bool loading = false;
 
   // Local brand list (can later be loaded from API)
-  final brandsList = [
-    'Apple',
-    'Samsung',
-    'Xiaomi',
-    'Huawei',
-    'Oppo',
-    'Realme',
-    'Google',
-    'Nokia',
-    'LG',
-    'Bosch',
-  ];
+ final Future<List<Map<String, dynamic>>> brandsList = ApiService().getBrandsList();
+   int? selectedBrandId;
+  
 
   bool get isPhone => category == ProductCategory.phone;
   bool get isSupplier => source == AddSource.supplier;
@@ -619,8 +610,7 @@ class _AddProductPageState extends State<AddProductPage> {
     if (!formKey.currentState!.validate()) return;
 
     // Check brand selection
-    final brandIndex = brandsList.indexOf(brand.text);
-    if (brandIndex == -1) {
+    if (selectedBrandId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Please select a valid brand")),
       );
@@ -665,7 +655,7 @@ class _AddProductPageState extends State<AddProductPage> {
             : personPhone.text.trim(),
           
 
-        "brand_id": brandIndex + 1, // must match DB id
+        "brand_id": selectedBrandId, // must match DB id
         "model": model.text.trim(),
         "color": color.text.trim(),
         "storage": storage.text.trim(),
@@ -872,16 +862,37 @@ class _AddProductPageState extends State<AddProductPage> {
               ),
 
               // Brand selection (required)
-              DropdownButtonFormField(
-                decoration: _decoration("Brand"),
-                items: brandsList
-                    .map((b) => DropdownMenuItem(value: b, child: Text(b)))
-                    .toList(),
-                onChanged: (v) {
-                  if (v != null) brand.text = v;
-                },
-                validator: (v) => v == null ? "Brand is required" : null,
-              ),
+FutureBuilder<List<Map<String, dynamic>>>(
+  future: brandsList, 
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const CircularProgressIndicator();
+    } else if (snapshot.hasError) {
+      return Text("Error: ${snapshot.error}");
+    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+      return const Text("No brands available");
+    } else {
+      
+      return DropdownButtonFormField<int>(
+        decoration: _decoration("Brand"),
+        items: snapshot.data!
+            .map((b) => DropdownMenuItem(
+                value: b['id'] as int, 
+                child: Text(b['name'].toString())))
+            .toList(),
+        onChanged: (v) {
+             setState(() {
+                selectedBrandId = v;
+                // Update text controller just in case, though not used now
+                brand.text = snapshot.data!
+                    .firstWhere((element) => element['id'] == v)['name'];
+             });
+        },
+        validator: (v) => v == null ? "Required" : null,
+      );
+    }
+  },
+),
 
               const SizedBox(height: 20),
 
@@ -917,11 +928,7 @@ class _AddProductPageState extends State<AddProductPage> {
                   quantity,
                   "Quantity",
                   isNumber: true,
-                  validator: (v) {
-                    final n = int.tryParse(v ?? "");
-                    if (n == null) return "Quantity must be a number";
-                    if (n <= 0) return "Quantity must be > 0";
-                    return null;
+                  validator: (v) {return "Quantity must be a number";
                   },
                 ),
 
