@@ -884,11 +884,13 @@ class _AddProductPageState extends State<AddProductPage> {
               ],
                 _field(
                   notes,
-                  "notes",
+                  "Notes (optional)",
+                  validator: (v) => null, // Optional field
                 ),
                 _field(
                   issues,
-                  "Issues",
+                  "Issues (optional)",
+                  validator: (v) => null, // Optional field
                 ),
                 
 
