@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "mobile_shop" "\0"
+            VALUE "FileDescription", "RabahPhone" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "mobile_shop" "\0"
+            VALUE "InternalName", "RabahPhone" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "mobile_shop.exe" "\0"
-            VALUE "ProductName", "mobile_shop" "\0"
+            VALUE "OriginalFilename", "RabahPhone.exe" "\0"
+            VALUE "ProductName", "RabahPhone" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

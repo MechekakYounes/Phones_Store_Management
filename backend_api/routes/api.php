@@ -36,6 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('buy-phones/{id}/mark-listed', [BuyPhoneController::class, 'markListed']);
     Route::post('buy-phones/{id}/mark-sold', [BuyPhoneController::class, 'markSold']);
     Route::post('buy-phones/{id}/mark-returned', [BuyPhoneController::class, 'markReturned']);
+    Route::post('buy-phones/{id}/update-sell-price', [BuyPhoneController::class, 'updateSellPrice']);
     Route::get('buy-phones-stats', [BuyPhoneController::class, 'stats']);
 
     //Exchanges routes 
